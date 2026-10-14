@@ -1,18 +1,190 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="kesiswaan-smpn1-tempuran">
-  <title>Kesiswaan SMP Negeri 1 Tempuran</title>
+  <title>Pendaftaran Ekstrakurikuler - SMPN 1 Tempuran</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+    .card { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #1a365d; margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; color: #4a5568; }
+    input, select, button { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; box-sizing: border-box; }
+    button { background-color: #3182ce; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
+    button:hover { background-color: #2b6cb0; }
+    .alert { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; }
+    .alert-danger { background-color: #fed7d7; color: #9b2c2c; }
+    .alert-success { background-color: #c6f6d5; color: #22543d; }
+  </style>
 </head>
 <body>
-  <main>
-    <h1>SMP Negeri 1 Tempuran</h1>
-    <h2>Aplikasi Pemilihan Ekstrakurikuler</h2>
-    <p>Tahun Ajaran 2026/2027</p>
-    <p>Aplikasi sedang dalam tahap persiapan.</p>
-  </main>
+
+  <div class="card">
+    <h2>Form Pendaftaran Ekskul<br><small style="font-size: 14px; font-weight: normal; color: #718096;">SMPN 1 Tempuran</small></h2>
+    
+    <div id="alert-box" class="alert"></div>
+
+    <form id="ekskul-form">
+      <div class="form-group">
+        <label for="nisn">NISN</label>
+        <input type="text" id="nisn" required placeholder="Masukkan NISN">
+      </div>
+
+      <div class="form-group">
+        <label for="nama">Nama Lengkap</label>
+        <input type="text" id="nama" required placeholder="Masukkan nama siswa">
+      </div>
+
+      <div class="form-group">
+        <label for="kelas">Kelas</label>
+        <select id="kelas" required onchange="handleKelasChange()">
+          <option value="">-- Pilih Kelas --</option>
+          <option value="7">Kelas 7</option>
+          <option value="8">Kelas 8</option>
+        </select>
+      </div>
+
+      <!-- Pilihan Ekskul -->
+      <div class="form-group" id="group-ekskul-1" style="display:none;">
+        <label for="ekskul1">Pilihan 1</label>
+        <select id="ekskul1" required></select>
+      </div>
+
+      <div class="form-group" id="group-ekskul-2" style="display:none;">
+        <label for="ekskul2">Pilihan 2</label>
+        <select id="ekskul2" required></select>
+      </div>
+
+      <div class="form-group" id="group-ekskul-3" style="display:none;">
+        <label for="ekskul3">Pilihan 3 (Khusus Kelas 7)</label>
+        <select id="ekskul3"></select>
+      </div>
+
+      <button type="submit" id="btn-submit">Kirim Pendaftaran</button>
+    </form>
+  </div>
+
+  <script>
+    // MASUKKAN KREDENSIAL SUPABASE
+    const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co/rest/v1/';
+    const SUPABASE_KEY = 'sb_publishable_bTOhDRtY3X6h8_4-5B3Q9A_RJi9-bKS';
+
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let listEkskul = [];
+
+    // Muat data ekskul saat halaman dibuka
+    async function loadEkskulData() {
+      const { data, error } = await _supabase
+        .from('extracurriculars')
+        .select('*')
+        .eq('aktif', true)
+        .order('urutan', { ascending: true });
+
+      if (!error) {
+        listEkskul = data;
+      }
+    }
+
+    function handleKelasChange() {
+      const kelas = document.getElementById('kelas').value;
+      const g1 = document.getElementById('group-ekskul-1');
+      const g2 = document.getElementById('group-ekskul-2');
+      const g3 = document.getElementById('group-ekskul-3');
+
+      if (!kelas) {
+        g1.style.display = g2.style.display = g3.style.display = 'none';
+        return;
+      }
+
+      g1.style.display = g2.style.display = 'block';
+      populateOptions();
+
+      if (kelas === '7') {
+        g3.style.display = 'block';
+        document.getElementById('ekskul3').required = true;
+      } else {
+        g3.style.display = 'none';
+        document.getElementById('ekskul3').required = false;
+      }
+    }
+
+    function populateOptions() {
+      const e1 = document.getElementById('ekskul1');
+      const e2 = document.getElementById('ekskul2');
+      const e3 = document.getElementById('ekskul3');
+
+      e1.innerHTML = e2.innerHTML = e3.innerHTML = '<option value="">-- Pilih --</option>';
+
+      listEkskul.forEach(item => {
+        const opt = `<option value="${item.id}">${item.nama}</option>`;
+        e1.innerHTML += opt;
+        e2.innerHTML += opt;
+        e3.innerHTML += opt;
+      });
+    }
+
+    document.getElementById('ekskul-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showAlert('', 'none');
+
+      const nisn = document.getElementById('nisn').value;
+      const nama = document.getElementById('nama').value;
+      const kelas = document.getElementById('kelas').value;
+      const p1 = document.getElementById('ekskul1').value;
+      const p2 = document.getElementById('ekskul2').value;
+      const p3 = kelas === '7' ? document.getElementById('ekskul3').value : null;
+
+      // Validasi pilihan tidak boleh sama
+      if (p1 === p2 || (kelas === '7' && (p1 === p3 || p2 === p3))) {
+        showAlert('Ekskul yang dipilih tidak boleh sama!', 'danger');
+        return;
+      }
+
+      // Simpan data siswa ke tabel students
+      const { data: student, error: errStudent } = await _supabase
+        .from('students')
+        .insert([{ nisn, nama, kelas: parseInt(kelas) }])
+        .select()
+        .single();
+
+      if (errStudent) {
+        showAlert('Gagal menyimpan data siswa: ' + errStudent.message, 'danger');
+        return;
+      }
+
+      // Simpan pilihan ke tabel selections
+      const { error: errSelection } = await _supabase
+        .from('selections')
+        .insert([{
+          student_id: student.id,
+          extracurricular_1_id: p1,
+          extracurricular_2_id: p2,
+          extracurricular_3_id: p3
+        }]);
+
+      if (errSelection) {
+        showAlert('Gagal menyimpan pilihan ekskul: ' + errSelection.message, 'danger');
+      } else {
+        showAlert('Pendaftaran berhasil disimpan!', 'success');
+        document.getElementById('ekskul-form').reset();
+        handleKelasChange();
+      }
+    });
+
+    function showAlert(msg, type) {
+      const box = document.getElementById('alert-box');
+      if (type === 'none') {
+        box.style.display = 'none';
+        return;
+      }
+      box.className = 'alert alert-' + type;
+      box.innerText = msg;
+      box.style.display = 'block';
+    }
+
+    loadEkskulData();
+  </script>
 </body>
 </html>
