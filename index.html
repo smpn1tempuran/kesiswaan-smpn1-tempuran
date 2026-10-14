@@ -18,6 +18,7 @@
     .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 500; display: none; }
     .alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+    .info-text { font-size: 12px; color: #2563eb; margin-top: 4px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -41,27 +42,31 @@
 
     <div class="form-group">
       <label for="kelas">Kelas</label>
+      <!-- HANYA KELAS 7 DAN KELAS 8 -->
       <select id="kelas" required onchange="handleKelasChange()">
         <option value="">-- Pilih Kelas --</option>
         <option value="7">Kelas 7</option>
         <option value="8">Kelas 8</option>
-        <option value="9">Kelas 9</option>
       </select>
     </div>
 
+    <!-- Pilihan Ekskul 1 -->
     <div id="group-ekskul-1" class="form-group" style="display: none;">
-      <label for="ekskul1">Pilihan Ekskul 1</label>
-      <select id="ekskul1" class="ekskul-select"><option value="">-- Pilih --</option></select>
+      <label for="ekskul1" id="label-ekskul1">Pilihan 1 (Wajib)</label>
+      <select id="ekskul1" class="ekskul-select" required></select>
+      <div id="info-pramuka" class="info-text" style="display: none;">* Pramuka otomatis wajib untuk siswa Kelas 7</div>
     </div>
 
+    <!-- Pilihan Ekskul 2 -->
     <div id="group-ekskul-2" class="form-group" style="display: none;">
-      <label for="ekskul2">Pilihan Ekskul 2</label>
-      <select id="ekskul2" class="ekskul-select"><option value="">-- Pilih --</option></select>
+      <label for="ekskul2" id="label-ekskul2">Pilihan Ekskul 1</label>
+      <select id="ekskul2" class="ekskul-select" required></select>
     </div>
 
+    <!-- Pilihan Ekskul 3 -->
     <div id="group-ekskul-3" class="form-group" style="display: none;">
-      <label for="ekskul3">Pilihan Ekskul 3 (Wajib untuk Kelas 7)</label>
-      <select id="ekskul3" class="ekskul-select"><option value="">-- Pilih --</option></select>
+      <label for="ekskul3" id="label-ekskul3">Pilihan Ekskul 2</label>
+      <select id="ekskul3" class="ekskul-select"></select>
     </div>
 
     <button type="submit">Kirim Pendaftaran</button>
@@ -69,25 +74,32 @@
 </div>
 
 <script>
-  // KREDENSIAL SUPABASE
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // PASTIKAN PASTE KUNCI DARI TAB "Legacy anon" SUPABASE YANG BERAWALAN eyJ...
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E'; 
+  // ISI DENGAN KUNCI eyJ... DARI TAB LEGACY ANON SUPABASE
+  const SUPABASE_ANON_KEY = 'PASTE_KUNCI_JWT_EYJ_DI_SINI'; 
 
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let listEkskul = [];
+  let idPramuka = null;
 
   async function loadEkskulData() {
     const { data, error } = await db
       .from('extracurriculars')
-      .select('*')
-      .eq('aktif', true)
-      .order('urutan', { ascending: true });
+      .select('*');
 
-    if (!error && data) {
-      listEkskul = data;
-    } else if (error) {
+    if (error) {
       console.error('Gagal mengambil data ekskul:', error.message);
+      showAlert('Gagal memuat ekskul: ' + error.message, 'danger');
+      return;
+    }
+
+    if (data) {
+      listEkskul = data;
+      // Cari ID Pramuka secara otomatis
+      const pramukaObj = listEkskul.find(e => e.nama.toLowerCase().includes('pramuka'));
+      if (pramukaObj) {
+        idPramuka = pramukaObj.id;
+      }
     }
   }
 
@@ -96,6 +108,15 @@
     const g1 = document.getElementById('group-ekskul-1');
     const g2 = document.getElementById('group-ekskul-2');
     const g3 = document.getElementById('group-ekskul-3');
+    
+    const e1 = document.getElementById('ekskul1');
+    const e2 = document.getElementById('ekskul2');
+    const e3 = document.getElementById('ekskul3');
+    
+    const l1 = document.getElementById('label-ekskul1');
+    const l2 = document.getElementById('label-ekskul2');
+    const l3 = document.getElementById('label-ekskul3');
+    const infoPramuka = document.getElementById('info-pramuka');
 
     if (!kelas) {
       g1.style.display = g2.style.display = g3.style.display = 'none';
@@ -103,30 +124,44 @@
     }
 
     g1.style.display = g2.style.display = 'block';
-    populateOptions();
+
+    // Daftar ekskul tanpa pramuka
+    const pilihanBiasa = listEkskul.filter(item => item.id !== idPramuka);
+    const optionsBiasaHTML = '<option value="">-- Pilih Ekskul --</option>' + 
+      pilihanBiasa.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
 
     if (kelas === '7') {
+      // KELAS 7: Pramuka (Wajib) + 2 Ekskul Pilihan (Total 3)
       g3.style.display = 'block';
-      document.getElementById('ekskul3').required = true;
-    } else {
+      e3.required = true;
+
+      l1.innerText = 'Ekskul Wajib';
+      e1.innerHTML = `<option value="${idPramuka}">Pramuka (Wajib)</option>`;
+      e1.disabled = true;
+      infoPramuka.style.display = 'block';
+
+      l2.innerText = 'Pilihan Ekskul 1';
+      e2.innerHTML = optionsBiasaHTML;
+
+      l3.innerText = 'Pilihan Ekskul 2';
+      e3.innerHTML = optionsBiasaHTML;
+    } else if (kelas === '8') {
+      // KELAS 8: Hanya 2 Ekskul Pilihan (Bebas)
       g3.style.display = 'none';
-      document.getElementById('ekskul3').required = false;
+      e3.required = false;
+
+      e1.disabled = false;
+      infoPramuka.style.display = 'none';
+
+      const optionsSemuaHTML = '<option value="">-- Pilih Ekskul --</option>' + 
+        listEkskul.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
+
+      l1.innerText = 'Pilihan Ekskul 1';
+      e1.innerHTML = optionsSemuaHTML;
+
+      l2.innerText = 'Pilihan Ekskul 2';
+      e2.innerHTML = optionsSemuaHTML;
     }
-  }
-
-  function populateOptions() {
-    const e1 = document.getElementById('ekskul1');
-    const e2 = document.getElementById('ekskul2');
-    const e3 = document.getElementById('ekskul3');
-
-    e1.innerHTML = e2.innerHTML = e3.innerHTML = '<option value="">-- Pilih --</option>';
-
-    listEkskul.forEach(item => {
-      const opt = `<option value="${item.id}">${item.nama}</option>`;
-      e1.innerHTML += opt;
-      e2.innerHTML += opt;
-      e3.innerHTML += opt;
-    });
   }
 
   document.getElementById('ekskul-form').addEventListener('submit', async (e) => {
@@ -136,7 +171,9 @@
     const nisn = document.getElementById('nisn').value;
     const nama = document.getElementById('nama').value;
     const kelas = document.getElementById('kelas').value;
-    const p1 = document.getElementById('ekskul1').value;
+    const e1 = document.getElementById('ekskul1');
+    
+    const p1 = kelas === '7' ? idPramuka : e1.value;
     const p2 = document.getElementById('ekskul2').value;
     const p3 = kelas === '7' ? document.getElementById('ekskul3').value : null;
 
@@ -145,8 +182,8 @@
       return;
     }
 
-    if (p1 === p2 || (kelas === '7' && (p1 === p3 || p2 === p3))) {
-      showAlert('Ekskul yang dipilih tidak boleh sama!', 'danger');
+    if (p1 === p2 || (kelas === '7' && (p1 === p3 || p2 === p3)) || (p2 === p3 && p3 !== null)) {
+      showAlert('Ekskul pilihan tidak boleh ada yang sama!', 'danger');
       return;
     }
 
@@ -190,7 +227,7 @@
     box.style.display = 'block';
   }
 
-  loadEkskulData();
+  document.addEventListener('DOMContentLoaded', loadEkskulData);
 </script>
 </body>
 </html>
