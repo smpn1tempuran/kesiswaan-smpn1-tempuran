@@ -67,124 +67,46 @@
   </div>
 
   <script>
-    // MASUKKAN KREDENSIAL SUPABASE
-    const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_bTOhDRtY3X6h8_4-5B3Q9A_RJi9-bKS';
+<script>
+  // 1. KREDENSIAL SUPABASE
+  const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
+  // Ambil key yang diawali eyJ... dari tab "Legacy anon" di Supabase
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E'; 
 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let listEkskul = [];
+  // 2. INISIALISASI CLIENT (Pakai variabel db yang konsisten)
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let listEkskul = [];
 
-    // Muat data ekskul saat halaman dibuka
-    async function loadEkskulData() {
-      const { data, error } = await _supabase
-        .from('extracurriculars')
-        .select('*')
-        .eq('aktif', true)
-        .order('urutan', { ascending: true });
+  // 3. FUNGSI LOAD DATA
+  async function loadEkskulData() {
+    const { data, error } = await db
+      .from('extracurriculars')
+      .select('*')
+      .eq('aktif', true)
+      .order('urutan', { ascending: true });
 
-      if (!error) {
-        listEkskul = data;
-      }
+    if (error) {
+      console.error('Gagal mengambil data ekskul:', error);
+      return;
     }
 
-    function handleKelasChange() {
-      const kelas = document.getElementById('kelas').value;
-      const g1 = document.getElementById('group-ekskul-1');
-      const g2 = document.getElementById('group-ekskul-2');
-      const g3 = document.getElementById('group-ekskul-3');
-
-      if (!kelas) {
-        g1.style.display = g2.style.display = g3.style.display = 'none';
-        return;
-      }
-
-      g1.style.display = g2.style.display = 'block';
-      populateOptions();
-
-      if (kelas === '7') {
-        g3.style.display = 'block';
-        document.getElementById('ekskul3').required = true;
-      } else {
-        g3.style.display = 'none';
-        document.getElementById('ekskul3').required = false;
-      }
-    }
-
-    function populateOptions() {
-      const e1 = document.getElementById('ekskul1');
-      const e2 = document.getElementById('ekskul2');
-      const e3 = document.getElementById('ekskul3');
-
-      e1.innerHTML = e2.innerHTML = e3.innerHTML = '<option value="">-- Pilih --</option>';
-
-      listEkskul.forEach(item => {
-        const opt = `<option value="${item.id}">${item.nama}</option>`;
-        e1.innerHTML += opt;
-        e2.innerHTML += opt;
-        e3.innerHTML += opt;
+    listEkskul = data;
+    
+    // Isikan data ke dropdown
+    const selectElements = document.querySelectorAll('.ekskul-select');
+    selectElements.forEach(select => {
+      select.innerHTML = '<option value="">-- Pilih --</option>';
+      data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.nama;
+        select.appendChild(option);
       });
-    }
-
-    document.getElementById('ekskul-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      showAlert('', 'none');
-
-      const nisn = document.getElementById('nisn').value;
-      const nama = document.getElementById('nama').value;
-      const kelas = document.getElementById('kelas').value;
-      const p1 = document.getElementById('ekskul1').value;
-      const p2 = document.getElementById('ekskul2').value;
-      const p3 = kelas === '7' ? document.getElementById('ekskul3').value : null;
-
-      // Validasi pilihan tidak boleh sama
-      if (p1 === p2 || (kelas === '7' && (p1 === p3 || p2 === p3))) {
-        showAlert('Ekskul yang dipilih tidak boleh sama!', 'danger');
-        return;
-      }
-
-      // Simpan data siswa ke tabel students
-      const { data: student, error: errStudent } = await _supabase
-        .from('students')
-        .insert([{ nisn, nama, kelas: parseInt(kelas) }])
-        .select()
-        .single();
-
-      if (errStudent) {
-        showAlert('Gagal menyimpan data siswa: ' + errStudent.message, 'danger');
-        return;
-      }
-
-      // Simpan pilihan ke tabel selections
-      const { error: errSelection } = await _supabase
-        .from('selections')
-        .insert([{
-          student_id: student.id,
-          extracurricular_1_id: p1,
-          extracurricular_2_id: p2,
-          extracurricular_3_id: p3
-        }]);
-
-      if (errSelection) {
-        showAlert('Gagal menyimpan pilihan ekskul: ' + errSelection.message, 'danger');
-      } else {
-        showAlert('Pendaftaran berhasil disimpan!', 'success');
-        document.getElementById('ekskul-form').reset();
-        handleKelasChange();
-      }
     });
+  }
 
-    function showAlert(msg, type) {
-      const box = document.getElementById('alert-box');
-      if (type === 'none') {
-        box.style.display = 'none';
-        return;
-      }
-      box.className = 'alert alert-' + type;
-      box.innerText = msg;
-      box.style.display = 'block';
-    }
-
-    loadEkskulData();
-  </script>
+  // Jalankan saat halaman siap
+  document.addEventListener('DOMContentLoaded', loadEkskulData);
+</script>
 </body>
 </html>
