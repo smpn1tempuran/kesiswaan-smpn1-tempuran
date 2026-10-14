@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pendaftaran Ekstrakurikuler - SMPN 1 Tempuran</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0"></script>
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
     .card { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -71,7 +71,7 @@
     const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_bTOhDRtY3X6h8_4-5B3Q9A_RJi9-bKS';
 
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let listEkskul = [];
 
     // Muat data ekskul saat halaman dibuka
