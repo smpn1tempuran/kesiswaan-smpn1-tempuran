@@ -36,9 +36,10 @@
 </div>
 
 <script>
-  // Kunci Supabase yang sudah diperbaiki
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTY0OTksImV4cCI6MjA1NjkzMjQ5OX0.eKq3Tq6pX8QZkQp6e_Qp8e_Qp8e_Qp8e_Qp8e_Qp8e8';
+  
+  // PASTE KUNCI ANON DARI SUPABASE SETTINGS > API DI SINI:
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
 
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -58,7 +59,6 @@
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    // 1. Tes Autentikasi
     const { data: authData, error: authError } = await db.auth.signInWithPassword({ email, password });
 
     if (authError) {
@@ -70,7 +70,6 @@
 
     printLog('AUTH BERHASIL! Memeriksa data admin_users...');
 
-    // 2. Cek DB admin_users
     const { data: userData, error: userError } = await db
       .from('admin_users')
       .select('*')
