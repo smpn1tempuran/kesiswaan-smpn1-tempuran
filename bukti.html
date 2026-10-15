@@ -14,12 +14,12 @@
     .btn-download { background: #2563eb; color: #ffffff; padding: 14px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; flex: 1; text-align: center; box-shadow: 0 4px 12px rgba(37,99,235,0.25); }
     .btn-download:hover { background: #1d4ed8; }
 
-    /* Ukuran Kertas A4 Proporsional (210mm x 297mm @ 96DPI => ~794px x 1123px) */
+    /* Ukuran Kertas A4 Proporsional */
     .surat-container { 
       background: #ffffff; 
       width: 100%; 
       max-width: 794px; 
-      min-height: 1000px; 
+      min-height: 980px; 
       padding: 50px 60px; 
       border-radius: 4px; 
       box-shadow: 0 8px 24px rgba(0,0,0,0.12); 
@@ -32,8 +32,12 @@
     .header-title { text-align: center; font-weight: 800; font-size: 18px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
     .header-sub { text-align: center; font-weight: 700; font-size: 16px; margin-bottom: 35px; text-transform: uppercase; }
 
-    ul { list-style-type: disc; margin-top: 10px; margin-bottom: 22px; padding-left: 25px; }
-    ul li { margin-bottom: 8px; font-size: 15px; }
+    /* Tabel Identitas Sejajar Rapi */
+    .identity-table { margin-top: 10px; margin-bottom: 22px; margin-left: 15px; border-collapse: collapse; }
+    .identity-table td { padding: 4px 0; vertical-align: top; font-size: 15px; }
+    .identity-table td.bullet-col { width: 20px; }
+    .identity-table td.label-col { width: 140px; font-weight: bold; }
+    .identity-table td.colon-col { width: 20px; text-align: center; font-weight: bold; }
 
     ol { margin-top: 10px; margin-bottom: 22px; padding-left: 25px; font-weight: bold; }
     ol li { margin-bottom: 8px; font-size: 15px; text-transform: uppercase; }
@@ -58,26 +62,47 @@
   <button class="btn-download" id="btn-download" onclick="downloadImage()">📸 Simpan Sebagai Gambar (PNG)</button>
 </div>
 
-<!-- Area Surat Pernyataan Kertas A4 Latar Putih -->
+<!-- Area Surat Pernyataan A4 Background Putih -->
 <div class="surat-container" id="surat-area">
   <div class="header-title">SURAT PERNYATAAN KESANGGUPAN MENGIKUTI EKSTRAKURIKULER</div>
   <div class="header-sub">SMP NEGERI 1 TEMPURAN</div>
 
   <p>Yang bertanda tangan di bawah ini:</p>
 
-  <ul>
-    <li><strong>Nama:</strong> <span id="lbl-nama">[Nama siswa]</span></li>
-    <li><strong>NIS/NISN:</strong> <span id="lbl-nisn">[Nomor identitas]</span></li>
-    <li><strong>Kelas:</strong> <span id="lbl-kelas">[Kelas]</span></li>
-    <li><strong>Tahun Pelajaran:</strong> <span id="lbl-tapel">2026/2027</span></li>
-  </ul>
+  <!-- Format Tabel Agar Titik Dua Lurus Sempurna -->
+  <table class="identity-table">
+    <tr>
+      <td class="bullet-col">•</td>
+      <td class="label-col">Nama</td>
+      <td class="colon-col">:</td>
+      <td><span id="lbl-nama">[Nama siswa]</span></td>
+    </tr>
+    <tr>
+      <td class="bullet-col">•</td>
+      <td class="label-col">NIS/NISN</td>
+      <td class="colon-col">:</td>
+      <td><span id="lbl-nisn">[Nomor identitas]</span></td>
+    </tr>
+    <tr>
+      <td class="bullet-col">•</td>
+      <td class="label-col">Kelas</td>
+      <td class="colon-col">:</td>
+      <td><span id="lbl-kelas">[Kelas]</span></td>
+    </tr>
+    <tr>
+      <td class="bullet-col">•</td>
+      <td class="label-col">Tahun Pelajaran</td>
+      <td class="colon-col">:</td>
+      <td><span id="lbl-tapel">2026/2027</span></td>
+    </tr>
+  </table>
 
   <p>Dengan ini menyatakan bahwa saya memilih dan bersedia mengikuti kegiatan ekstrakurikuler berikut:</p>
 
-  <ol>
+  <ol id="list-ekskul">
     <li id="lbl-e1">[Pilihan ekstrakurikuler pertama]</li>
-    <li id="lbl-e2" style="display: list-item;">[Pilihan ekstrakurikuler kedua]</li>
-    <li id="lbl-e3" style="display: none;">[Pilihan ekstrakurikuler ketiga]</li>
+    <li id="lbl-e2">[Pilihan ekstrakurikuler kedua]</li>
+    <li id="lbl-e3">[Pilihan ekstrakurikuler ketiga]</li>
   </ol>
 
   <p>Saya menyatakan bersedia mengikuti kegiatan ekstrakurikuler yang telah saya pilih dengan sungguh-sungguh, disiplin, dan penuh tanggung jawab selama satu tahun pelajaran. Saya juga berkomitmen untuk tidak berpindah ekstrakurikuler selama periode tersebut, kecuali apabila terdapat ketentuan atau persetujuan khusus dari pihak sekolah.</p>
@@ -125,10 +150,10 @@
       document.getElementById('lbl-nama-ttd').innerText = data.students.nama_lengkap;
       document.getElementById('lbl-nisn').innerText = data.students.nisn;
       document.getElementById('lbl-kelas').innerText = 'Kelas ' + data.students.kelas;
-      
-      // Mengisi Pilihan Ekskul
-      document.getElementById('lbl-e1').innerText = data.e1 ? data.e1.nama : '-';
-      
+
+      const e1Name = data.e1 ? data.e1.nama : '-';
+      document.getElementById('lbl-e1').innerText = e1Name;
+
       if (data.e2 && data.e2.nama) {
         document.getElementById('lbl-e2').innerText = data.e2.nama;
         document.getElementById('lbl-e2').style.display = 'list-item';
@@ -143,12 +168,10 @@
         document.getElementById('lbl-e3').style.display = 'none';
       }
 
-      // Format Tanggal
       document.getElementById('lbl-tgl').innerText = new Date(data.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'Long', year: 'numeric' });
     }
   }
 
-  // Fungsi Konversi HTML ke Gambar PNG
   function downloadImage() {
     const btn = document.getElementById('btn-download');
     btn.disabled = true;
@@ -157,7 +180,7 @@
     const element = document.getElementById('surat-area');
 
     html2canvas(element, {
-      scale: 2, // Resolusi HD tajam
+      scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff'
     }).then(canvas => {
