@@ -59,7 +59,7 @@
         </select>
       </div>
 
-      <!-- Option Khusus Dewan Penggalang untuk Kelas 8 -->
+      <!-- Opsi Dewan Penggalang untuk Kelas 8 -->
       <div class="form-group" id="group-dp" style="display: none;">
         <label for="is_dp">Status Anggota Dewan Penggalang (DP)?</label>
         <select id="is_dp" onchange="handleKelasChange()">
@@ -80,18 +80,18 @@
 
       <div class="form-group" id="group-ekskul1">
         <label for="ekskul1" id="lbl-ekskul1">Pilihan Utama (Wajib)</label>
-        <select id="ekskul1" required>
-          <option value="">-- Pilih Ekskul Utama --</option>
+        <select id="ekskul1">
+          <option value="">-- Pilih Ekskul 1 --</option>
         </select>
       </div>
       <div class="form-group" id="group-ekskul2">
-        <label for="ekskul2" id="lbl-ekskul2">Pilihan 2 (Opsional / Siswa)</label>
+        <label for="ekskul2" id="lbl-ekskul2">Pilihan Ekskul 2</label>
         <select id="ekskul2">
-          <option value="">-- Tidak Memilih --</option>
+          <option value="">-- Pilih Ekskul 2 --</option>
         </select>
       </div>
       <div class="form-group" id="group-ekskul3">
-        <label for="ekskul3" id="lbl-ekskul3">Pilihan 3 (Opsional / Siswa)</label>
+        <label for="ekskul3" id="lbl-ekskul3">Pilihan Ekskul 3</label>
         <select id="ekskul3">
           <option value="">-- Tidak Memilih --</option>
         </select>
@@ -116,6 +116,7 @@
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
+  // PASTIKAN PASTE ANON KEY SUPABASE KAMU DI SINI:
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -157,7 +158,7 @@
     const infoRules = document.getElementById('info-rules');
 
     if (kelas === '7' || (kelas === '8' && isDp === 'ya')) {
-      // Wajib Pramuka + 2 Ekskul Pilihan
+      // Wajib Pramuka + 2 Ekskul Pilihan (Total 3)
       if (pramukaId) {
         ekskul1Select.value = pramukaId;
         ekskul1Select.disabled = true;
@@ -171,16 +172,16 @@
         ? '📌 <strong>Kelas 7:</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.'
         : '📌 <strong>Dewan Penggalang (Kelas 8):</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.';
     } else {
-      // Kelas 8 BUKAN Dewan Penggalang -> HANYA Memilih 2 Ekskul Pilihan (Pilihan 3 disembunyikan)
+      // Kelas 8 BUKAN Dewan Penggalang -> HANYA Memilih 2 Ekskul Pilihan
       ekskul1Select.disabled = false;
       ekskul1Select.value = '';
       groupEkskul3.style.display = 'none';
-      document.getElementById('ekskul3').value = ''; // Reset nilai pilihan 3
+      document.getElementById('ekskul3').value = '';
       
       document.getElementById('lbl-ekskul1').innerText = 'Pilihan Ekskul 1';
       document.getElementById('lbl-ekskul2').innerText = 'Pilihan Ekskul 2';
 
-      infoRules.innerHTML = '📌 <strong>Kelas 8 (Bukan Dewan Penggalang):</strong> Silakan memilih tepat 2 ekstrakurikuler pilihan.';
+      infoRules.innerHTML = '📌 <strong>Kelas 8 (Bukan Dewan Penggalang):</strong> Silakan memilih 2 ekstrakurikuler pilihan.';
     }
   }
 
@@ -248,6 +249,7 @@
     const nisn = document.getElementById('nisn').value.trim();
     const nama = document.getElementById('nama').value.trim();
     const kelas = parseInt(document.getElementById('kelas').value);
+    const isDp = document.getElementById('is_dp').value;
 
     // 1. Simpan/Update Siswa
     const { data: student, error: errStudent } = await db.from('students').insert([{ nisn, nama_lengkap: nama, kelas }]).select().single();
@@ -261,13 +263,12 @@
     const e2 = document.getElementById('ekskul2').value || null;
     let e3 = document.getElementById('ekskul3').value || null;
 
-    // Jika Kelas 8 Non-DP, paksa e3 menjadi null
-    const isDp = document.getElementById('is_dp').value;
+    // Jika Kelas 8 Bukan Dewan Penggalang, paksa e3 menjadi null
     if (kelas === 8 && isDp === 'tidak') {
       e3 = null;
     }
 
-    // 2. Simpan Pilihan
+    // 2. Simpan Pilihan ke Database Supabase
     const { data: selection, error: errSel } = await db.from('selections').insert([{
       student_id: student.id,
       extracurricular_1_id: e1,
