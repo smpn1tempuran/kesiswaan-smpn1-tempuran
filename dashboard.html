@@ -11,53 +11,69 @@
     * { box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f8fafc; display: flex; height: 100vh; color: #334155; }
     
-    .sidebar { width: 260px; background: #1e293b; color: #fff; padding: 20px 10px; display: flex; flex-direction: column; overflow-y: auto; }
-    .sidebar h3 { font-size: 15px; text-align: center; color: #38bdf8; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-    .nav-btn { background: none; border: none; color: #cbd5e1; width: 100%; text-align: left; padding: 12px 15px; font-size: 14px; cursor: pointer; border-radius: 6px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-    .nav-btn:hover, .nav-btn.active { background: #2563eb; color: #fff; font-weight: bold; }
+    .sidebar { width: 260px; background: #1e293b; color: #fff; padding: 20px 10px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+    .sidebar h3 { font-size: 16px; text-align: center; color: #38bdf8; margin-bottom: 25px; margin-top: 5px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+    .nav-btn { background: none; border: none; color: #cbd5e1; width: 100%; text-align: left; padding: 12px 15px; font-size: 14px; cursor: pointer; border-radius: 6px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+    .nav-btn:hover, .nav-btn.active { background: #2563eb; color: #fff; font-weight: 600; }
     
-    .main-content { flex: 1; padding: 25px; overflow-y: auto; }
-    .header-bar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-    .card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card h4 { margin: 0 0 5px 0; font-size: 13px; color: #64748b; }
-    .card .val { font-size: 26px; font-weight: bold; color: #0f172a; }
+    .main-content { flex: 1; padding: 25px; overflow-y: auto; background-color: #f8fafc; }
+    
+    .header-bar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; font-size: 15px; }
+    .header-status { color: #334155; font-size: 15px; }
+    .header-status span.buka { color: #10b981; font-weight: bold; }
+    .header-status span.tutup { color: #ef4444; font-weight: bold; }
 
-    .panel { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: none; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
+    .card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card h4 { margin: 0 0 8px 0; font-size: 13px; color: #64748b; font-weight: 600; }
+    .card .val { font-size: 28px; font-weight: bold; color: #0f172a; }
+
+    .panel { background: #fff; padding: 22px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: none; }
     .panel.active { display: block; }
+    .panel h3 { margin-top: 0; color: #1e293b; font-size: 18px; margin-bottom: 20px; }
+    
     table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-    th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
-    th { background: #f1f5f9; color: #334155; }
-    .btn { padding: 8px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; font-weight: bold; }
+    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+    th { background: #f8fafc; color: #475569; font-weight: 600; }
+    
+    .btn { padding: 9px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
     .btn-primary { background: #2563eb; color: #fff; }
     .btn-success { background: #10b981; color: #fff; }
     .btn-warning { background: #f59e0b; color: #fff; }
     .btn-danger { background: #ef4444; color: #fff; }
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 15px; }
-    input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 5px; font-size: 13px; }
-    .total-box { margin-top: 15px; font-size: 16px; font-weight: bold; text-align: right; color: #1e3a8a; }
+    
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 15px; }
+    input, select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; }
+    .total-box { margin-top: 18px; font-size: 16px; font-weight: bold; text-align: right; color: #1e3a8a; }
   </style>
 </head>
 <body>
 
+<!-- Sidebar Navigasi -->
 <div class="sidebar">
-  <h3>DASHBOARD KESISWAAN</h3>
-  <button class="nav-btn active admin-only" onclick="switchPanel(this, 'p-ringkasan')">📊 Ringkasan Data</button>
-  <button class="nav-btn admin-only" onclick="switchPanel(this, 'p-ekskul')">🎯 Kelola Ekskul</button>
-  <button class="nav-btn admin-only" onclick="switchPanel(this, 'p-siswa')">👥 Data Siswa & Pilihan</button>
-  <button class="nav-btn admin-only" onclick="switchPanel(this, 'p-prestasi')">🏆 Prestasi Siswa</button>
-  <button class="nav-btn admin-only" onclick="switchPanel(this, 'p-rab')">🤖 Rencana Lomba (RAB AI)</button>
-  <button class="nav-btn" onclick="switchPanel(this, 'p-nilai')">📝 Penilaian Ekskul</button>
-  <button class="nav-btn admin-only" onclick="switchPanel(this, 'p-pengaturan')">⚙️ Pengaturan User</button>
+  <h3>SMPN 1 TEMPURAN</h3>
+  <button class="nav-btn active admin-menu" onclick="switchPanel(this, 'p-ringkasan')">📊 Ringkasan Data</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-ekskul')">🎯 Kelola Ekskul</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-siswa')">👥 Data Siswa & Pilihan</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-prestasi')">🏆 Prestasi Siswa</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-rab')">🤖 Rencana Lomba (RAB AI)</button>
+  <button class="nav-btn" id="btn-menu-nilai" onclick="switchPanel(this, 'p-nilai')">📝 Penilaian Ekskul</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-audit')">📜 Riwayat Perubahan</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-pengaturan')">⚙️ Pengaturan & User</button>
+  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-backup')">💾 Backup Data</button>
 </div>
 
+<!-- Main Content Area -->
 <div class="main-content">
+  <!-- Header Bar -->
   <div class="header-bar">
-    <div>
-      <strong>User:</strong> <span id="lbl-user-email">Pengampu</span> | 
-      <strong>Akses:</strong> <span id="lbl-user-role" style="color:#2563eb;">Admin Kesiswaan</span>
+    <div class="header-status">
+      <strong>Status Periode:</strong> <span id="lbl-status-periode" class="buka">BUKA</span> | <strong>Tahun Pelajaran:</strong> <span id="lbl-tapel">2026/2027</span>
     </div>
-    <button class="btn btn-danger" onclick="logout()">Keluar</button>
+    <div style="display:flex; align-items:center; gap:15px;">
+      <span id="lbl-user-info" style="font-size:13px; color:#64748b;"></span>
+      <button class="btn btn-danger" onclick="logout()">Keluar</button>
+    </div>
   </div>
 
   <!-- 1. Ringkasan Data -->
@@ -102,17 +118,12 @@
     </table>
   </div>
 
-  <!-- 4. Prestasi Siswa (PERBAIKAN FITUR 2) -->
+  <!-- 4. Prestasi Siswa -->
   <div id="p-prestasi" class="panel">
     <h3>Pencatatan Prestasi Siswa</h3>
     <div class="form-row">
-      <select id="pres-student-id">
-        <option value="">-- Pilih Nama Peserta/Siswa --</option>
-      </select>
-      <select id="pres-jenis">
-        <option value="Akademik">Akademik</option>
-        <option value="Non-Akademik">Non-Akademik</option>
-      </select>
+      <select id="pres-student-id"><option value="">-- Pilih Nama Peserta/Siswa --</option></select>
+      <select id="pres-jenis"><option value="Akademik">Akademik</option><option value="Non-Akademik">Non-Akademik</option></select>
       <input type="text" id="pres-nama" placeholder="Nama Kejuaraan/Lomba">
       <input type="text" id="pres-peringkat" placeholder="Juara 1 / Emas">
       <input type="text" id="pres-tingkat" placeholder="Kab/Prov/Nasional">
@@ -124,7 +135,7 @@
     </table>
   </div>
 
-  <!-- 5. Rencana Lomba & RAB AI Tabel (PERBAIKAN FITUR 1) -->
+  <!-- 5. Rencana Lomba & RAB AI -->
   <div id="p-rab" class="panel">
     <h3>Penyusunan RAB Rencana Lomba (Tabel AI)</h3>
     <div class="form-row">
@@ -132,24 +143,16 @@
       <input type="number" id="rab-peserta" placeholder="Jumlah Peserta">
       <button class="btn btn-primary" onclick="generateRABTableAI()">🤖 Generate Tabel RAB AI</button>
     </div>
-
-    <div style="margin-top:20px;">
+    <div style="margin-top:20px; display:flex; gap:8px;">
       <button class="btn btn-primary" onclick="addRABRow()">+ Tambah Item Manual</button>
       <button class="btn btn-danger" onclick="clearAllRAB()">Hapus Semua Data Tabel</button>
       <button class="btn btn-success" onclick="exportRABPDF()">Export PDF</button>
       <button class="btn btn-warning" onclick="exportRABCSV()">Export CSV</button>
     </div>
-
     <table id="tbl-rab" style="margin-top:15px;">
       <thead>
         <tr>
-          <th>No</th>
-          <th>Kebutuhan</th>
-          <th>Jumlah Barang</th>
-          <th>Harga Satuan (Rp)</th>
-          <th>Lama Kegiatan (Hari/Kali)</th>
-          <th>Total Jumlah (Rp)</th>
-          <th>Aksi</th>
+          <th>No</th><th>Kebutuhan</th><th>Jumlah Barang</th><th>Harga Satuan (Rp)</th><th>Lama Kegiatan</th><th>Total Jumlah (Rp)</th><th>Aksi</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -157,9 +160,9 @@
     <div class="total-box" id="rab-total-display">Total RAB: Rp 0</div>
   </div>
 
-  <!-- 6. Penilaian Ekstrakurikuler Khusus Pengampu (PERBAIKAN FITUR 3) -->
+  <!-- 6. Penilaian Ekstrakurikuler (Tampil untuk Admin & Pengampu) -->
   <div id="p-nilai" class="panel">
-    <h3>Penilaian Anggota Ekstrakurikuler</h3>
+    <h3>Penilaian Ekstrakurikuler</h3>
     <div class="form-row">
       <select id="sel-ekskul-nilai" onchange="loadSiswaByEkskul()">
         <option value="">-- Pilih Ekstrakurikuler --</option>
@@ -168,36 +171,71 @@
     <table>
       <thead>
         <tr>
-          <th>No</th>
-          <th>NISN</th>
-          <th>Nama Siswa</th>
-          <th>Kelas</th>
-          <th>Nilai Predikat</th>
-          <th>Catatan Pembina</th>
-          <th>Aksi</th>
+          <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Nilai Predikat</th><th>Catatan Pembina</th><th>Aksi</th>
         </tr>
       </thead>
       <tbody id="tbl-penilaian"></tbody>
     </table>
   </div>
 
-  <!-- 7. Pengaturan & User Roles -->
+  <!-- 7. Riwayat Perubahan -->
+  <div id="p-audit" class="panel">
+    <h3>Riwayat Perubahan Data (Audit Log)</h3>
+    <table>
+      <thead><tr><th>No</th><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Detail</th></tr></thead>
+      <tbody id="tbl-audit"></tbody>
+    </table>
+  </div>
+
+  <!-- 8. Pengaturan -->
   <div id="p-pengaturan" class="panel">
-    <h3>Pengaturan User Pengampu & Admin</h3>
-    <p>Pengelolaan akun pengampu dan peran hak akses sistem.</p>
+    <h3>Pengaturan Periode & System</h3>
+    <div style="background:#f1f5f9; padding:15px; border-radius:6px; margin-bottom:20px;">
+      <h4>Kontrol Periode Pendaftaran</h4>
+      <button class="btn btn-danger" onclick="togglePeriode('TUTUP')">🔒 Tutup Periode Pendaftaran</button>
+      <button class="btn btn-success" onclick="togglePeriode('BUKA')">🔓 Buka Periode Pendaftaran</button>
+    </div>
+  </div>
+
+  <!-- 9. Backup Data -->
+  <div id="p-backup" class="panel">
+    <h3>Backup Data</h3>
+    <button class="btn btn-primary" onclick="exportDataCSV()">💾 Backup Seluruh Data (CSV)</button>
   </div>
 </div>
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
+  const SUPABASE_ANON_KEY = 'PASTE_KUNCI_ANON_PUBLIC_SUPABASE_DI_SINI';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let rawSelections = [];
   let rawStudents = [];
   let rawEkskul = [];
-  let currentUserRole = 'admin'; // 'admin' atau 'pengampu'
-  let userAssignedEkskulId = null; 
+  let rabItems = [];
+  let userSession = null;
+
+  function checkAuthRole() {
+    const sessionStr = localStorage.getItem('user_session');
+    if (!sessionStr) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    userSession = JSON.parse(sessionStr);
+    document.getElementById('lbl-user-info').innerText = `${userSession.email} (${userSession.role.toUpperCase()})`;
+
+    // JIKA USER ADALAH PENGAMPU
+    if (userSession.role === 'pengampu') {
+      // Sembunyikan seluruh tombol menu admin di sidebar
+      document.querySelectorAll('.admin-menu').forEach(el => el.style.display = 'none');
+      
+      // Buka langsung panel Penilaian Ekskul
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('p-nilai').classList.add('active');
+      document.getElementById('btn-menu-nilai').classList.add('active');
+    }
+  }
 
   function switchPanel(btn, panelId) {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -206,21 +244,10 @@
     btn.classList.add('active');
   }
 
-  async function initDashboard() {
-    // Simulasi deteksi role user
-    if (currentUserRole === 'pengampu') {
-      document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-      document.getElementById('p-ringkasan').classList.remove('active');
-      document.getElementById('p-nilai').classList.add('active');
-      document.getElementById('lbl-user-role').innerText = 'Pengampu Ekskul';
-    }
+  async function loadDashboardData() {
+    checkAuthRole();
 
-    await loadDataMaster();
-    loadPrestasi();
-  }
-
-  async function loadDataMaster() {
-    // 1. Load Ekskul
+    // 1. Fetch Ekstrakurikuler
     const { data: eData } = await db.from('extracurriculars').select('*').order('nama');
     if (eData) {
       rawEkskul = eData;
@@ -228,10 +255,18 @@
       renderTableEkskul(eData);
 
       const opts = eData.map(e => `<option value="${e.id}">${e.nama}</option>`).join('');
-      document.getElementById('sel-ekskul-nilai').innerHTML = '<option value="">-- Pilih Ekstrakurikuler --</option>' + opts;
+      const selEkskul = document.getElementById('sel-ekskul-nilai');
+      selEkskul.innerHTML = '<option value="">-- Pilih Ekstrakurikuler --</option>' + opts;
+
+      // Jika user pengampu di-assign ke ekskul tertentu, kunci dropdownnya
+      if (userSession && userSession.role === 'pengampu' && userSession.ekskul_id) {
+        selEkskul.value = userSession.ekskul_id;
+        selEkskul.disabled = true;
+        loadSiswaByEkskul();
+      }
     }
 
-    // 2. Load Siswa & Pilihan
+    // 2. Fetch Siswa
     const { data: sData } = await db.from('students').select('*').order('nama_lengkap');
     if (sData) {
       rawStudents = sData;
@@ -239,6 +274,7 @@
         sData.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.nisn})</option>`).join('');
     }
 
+    // 3. Fetch Selections
     const { data: selData } = await db.from('selections').select(`
       id,
       students ( id, nisn, nama_lengkap, kelas ),
@@ -254,10 +290,72 @@
       document.getElementById('cnt-k8').innerText = selData.filter(s => s.students && s.students.kelas == 8).length;
       renderTableSiswa(selData);
     }
+
+    loadPrestasi();
   }
 
-  // --- FITUR 1: RAB AI BERBENTUK TABEL DENGAN EDIT ROW & AKSI ---
-  let rabItems = [];
+  function loadSiswaByEkskul() {
+    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
+    const tbody = document.getElementById('tbl-penilaian');
+
+    if (!ekskulId) {
+      tbody.innerHTML = '';
+      return;
+    }
+
+    const filtered = rawSelections.filter(s => 
+      (s.e1 && s.e1.id === ekskulId) || 
+      (s.e2 && s.e2.id === ekskulId) || 
+      (s.e3 && s.e3.id === ekskulId)
+    );
+
+    tbody.innerHTML = filtered.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${item.students ? item.students.nisn : '-'}</td>
+        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
+        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
+        <td>
+          <select style="width:70px">
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+          </select>
+        </td>
+        <td><input type="text" placeholder="Catatan perkembangan..." style="width:100%"></td>
+        <td><button class="btn btn-success" onclick="alert('Nilai berhasil disimpan!')">Simpan</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function renderTableEkskul(list) {
+    document.getElementById('tbl-ekskul').innerHTML = list.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td><strong>${item.nama}</strong></td>
+        <td><button class="btn btn-danger" onclick="deleteEkskul('${item.id}')">Hapus</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function renderTableSiswa(list) {
+    const filterKelas = document.getElementById('filter-kelas').value;
+    let filtered = filterKelas ? list.filter(s => s.students && s.students.kelas == filterKelas) : list;
+
+    document.getElementById('tbl-siswa').innerHTML = filtered.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${item.students ? item.students.nisn : '-'}</td>
+        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
+        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
+        <td>${item.e1 ? item.e1.nama : '-'}</td>
+        <td>${item.e2 ? item.e2.nama : '-'}</td>
+        <td>${item.e3 ? item.e3.nama : '-'}</td>
+        <td><button class="btn btn-danger" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button></td>
+      </tr>
+    `).join('');
+  }
 
   function generateRABTableAI() {
     const nama = document.getElementById('rab-nama').value;
@@ -320,7 +418,6 @@
     }
   }
 
-  // --- FITUR 2: PRESTASI DENGAN NAMA PESERTA DAN SUPABASE ---
   async function savePrestasi() {
     const student_id = document.getElementById('pres-student-id').value;
     const jenis_prestasi = document.getElementById('pres-jenis').value;
@@ -344,19 +441,15 @@
       tahun_pelajaran: '2026/2027'
     }]);
 
-    if (error) {
-      alert('Gagal menyimpan prestasi: ' + error.message);
-    } else {
-      alert('Prestasi berhasil disimpan!');
-      loadPrestasi();
-    }
+    if (error) alert('Gagal: ' + error.message);
+    else { alert('Prestasi berhasil disimpan!'); loadPrestasi(); }
   }
 
   async function loadPrestasi() {
     const { data } = await db.from('achievements').select('*').order('created_at', { ascending: false });
     const tbody = document.getElementById('tbl-prestasi');
 
-    if (data) {
+    if (data && tbody) {
       tbody.innerHTML = data.map((p, idx) => `
         <tr>
           <td>${idx + 1}</td>
@@ -378,69 +471,43 @@
     }
   }
 
-  // --- FITUR 3: PENILAIAN SISWA KHUSUS EKSKUL ---
-  function loadSiswaByEkskul() {
-    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
-    const tbody = document.getElementById('tbl-penilaian');
+  async function addEkskul() {
+    const nama = document.getElementById('add-nama-ekskul').value.trim();
+    if (!nama) return alert('Nama ekskul tidak boleh kosong!');
 
-    if (!ekskulId) {
-      tbody.innerHTML = '';
-      return;
+    const { error } = await db.from('extracurriculars').insert([{ nama }]);
+    if (error) alert('Gagal: ' + error.message);
+    else { document.getElementById('add-nama-ekskul').value = ''; loadDashboardData(); }
+  }
+
+  async function deleteEkskul(id) {
+    if (confirm('Yakin ingin menghapus ekstrakurikuler ini?')) {
+      await db.from('extracurriculars').delete().eq('id', id);
+      loadDashboardData();
     }
-
-    // Filter siswa yang mendaftar di ekskul ini (Pilihan 1, 2, atau 3)
-    const filtered = rawSelections.filter(s => 
-      (s.e1 && s.e1.id === ekskulId) || 
-      (s.e2 && s.e2.id === ekskulId) || 
-      (s.e3 && s.e3.id === ekskulId)
-    );
-
-    tbody.innerHTML = filtered.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${item.students ? item.students.nisn : '-'}</td>
-        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
-        <td>
-          <select style="width:70px">
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-        </td>
-        <td><input type="text" placeholder="Catatan perkembangan..." style="width:100%"></td>
-        <td><button class="btn btn-success" onclick="alert('Nilai berhasil disimpan!')">Simpan</button></td>
-      </tr>
-    `).join('');
   }
 
-  function renderTableEkskul(list) {
-    document.getElementById('tbl-ekskul').innerHTML = list.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td><strong>${item.nama}</strong></td>
-        <td><button class="btn btn-danger" onclick="deleteEkskul('${item.id}')">Hapus</button></td>
-      </tr>
-    `).join('');
+  async function deleteSelection(selectionId, studentId) {
+    if (confirm('Yakin ingin menghapus data siswa beserta pilihannya?')) {
+      await db.from('selections').delete().eq('id', selectionId);
+      if (studentId) await db.from('students').delete().eq('id', studentId);
+      loadDashboardData();
+    }
   }
 
-  function renderTableSiswa(list) {
-    const filterKelas = document.getElementById('filter-kelas').value;
-    let filtered = filterKelas ? list.filter(s => s.students && s.students.kelas == filterKelas) : list;
+  function exportDataCSV() {
+    let csv = "NISN,Nama Lengkap,Kelas,Pilihan 1,Pilihan 2,Pilihan 3\n";
+    rawSelections.forEach(s => {
+      if (s.students) {
+        csv += `"${s.students.nisn}","${s.students.nama_lengkap}","Kelas ${s.students.kelas}","${s.e1 ? s.e1.nama : '-'}","${s.e2 ? s.e2.nama : '-'}","${s.e3 ? s.e3.nama : '-'}"\n`;
+      }
+    });
 
-    document.getElementById('tbl-siswa').innerHTML = filtered.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${item.students ? item.students.nisn : '-'}</td>
-        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
-        <td>${item.e1 ? item.e1.nama : '-'}</td>
-        <td>${item.e2 ? item.e2.nama : '-'}</td>
-        <td>${item.e3 ? item.e3.nama : '-'}</td>
-        <td><button class="btn btn-danger" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button></td>
-      </tr>
-    `).join('');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Rekap_Pendaftaran_Ekskul.csv';
+    link.click();
   }
 
   function exportRABPDF() {
@@ -464,9 +531,19 @@
     link.click();
   }
 
-  function logout() { window.location.href = 'login.html'; }
+  function togglePeriode(status) {
+    const el = document.getElementById('lbl-status-periode');
+    el.innerText = status;
+    el.className = status === 'BUKA' ? 'buka' : 'tutup';
+    alert('Status periode diubah menjadi: ' + status);
+  }
 
-  document.addEventListener('DOMContentLoaded', initDashboard);
+  function logout() {
+    localStorage.removeItem('user_session');
+    window.location.href = 'login.html';
+  }
+
+  document.addEventListener('DOMContentLoaded', loadDashboardData);
 </script>
 </body>
 </html>
