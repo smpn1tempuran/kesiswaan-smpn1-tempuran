@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Sistem - SMPN 1 Tempuran</title>
+  <title>Portal Login - SMPN 1 Tempuran</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 90vh; margin: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
     .card { width: 100%; max-width: 400px; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    h2 { text-align: center; color: #1e293b; margin-bottom: 5px; }
+    h2 { text-align: center; color: #1e293b; margin-bottom: 5px; margin-top: 0; }
     p.subtitle { text-align: center; color: #64748b; margin-top: 0; margin-bottom: 25px; font-size: 14px; }
     .form-group { margin-bottom: 18px; }
     label { font-weight: 600; display: block; margin-bottom: 6px; color: #334155; font-size: 14px; }
@@ -26,13 +26,13 @@
 <div class="card">
   <h2>Portal Login</h2>
   <p class="subtitle">Sistem Ekskul SMPN 1 Tempuran</p>
-  
+
   <div id="alert-box" class="alert alert-danger"></div>
 
   <form id="login-form">
     <div class="form-group">
-      <label for="username">Username / Email</label>
-      <input type="text" id="username" required placeholder="Masukkan Username / Email">
+      <label for="email">Username / Email</label>
+      <input type="email" id="email" required placeholder="Masukkan Email">
     </div>
 
     <div class="form-group">
@@ -43,14 +43,13 @@
     <div class="form-group">
       <label for="role">Hak Akses / Role</label>
       <select id="role" required>
-        <option value="">-- Pilih Akses --</option>
-        <option value="admin">Admin</option>
         <option value="operator">Operator</option>
+        <option value="admin">Admin</option>
         <option value="kepsek">Kepala Sekolah</option>
       </select>
     </div>
 
-    <button type="submit">Masuk ke Sistem</button>
+    <button type="submit" id="btn-submit">Masuk ke Sistem</button>
   </form>
 
   <div class="footer-link">
@@ -60,8 +59,7 @@
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // PASTIKAN PASTE KUNCI EYJ... DARI TAB LEGACY ANON SUPABASE
-  const SUPABASE_ANON_KEY = 'PASTE_KUNCI_JWT_EYJ_DI_SINI'; 
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NjE5MDV2M4cCI6MTI3NzM2NzA2NzM2q2jY1KybU81E';
 
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -69,49 +67,63 @@
     e.preventDefault();
     showAlert('', false);
 
-    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
+    const selectedRole = document.getElementById('role').value.toLowerCase();
+    const btn = document.getElementById('btn-submit');
 
-    // Cek pengguna di tabel admin_users
-    const { data, error } = await db
+    btn.disabled = true;
+    btn.innerText = 'Memeriksa...';
+
+    // 1. Authenticate Supabase Auth
+    const { data: authData, error: authError } = await db.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (authError) {
+      showAlert('Login gagal: Email atau Password salah.', true);
+      btn.disabled = false;
+      btn.innerText = 'Masuk ke Sistem';
+      return;
+    }
+
+    // 2. Cek data di tabel admin_users
+    const userId = authData.user.id;
+    const { data: userData, error: userError } = await db
       .from('admin_users')
       .select('*')
-      .eq('username', username)
-      .eq('role', role)
-      .single();
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    if (error || !data) {
-      showAlert('Username atau Hak Akses tidak ditemukan!');
+    if (userError || !userData) {
+      showAlert('Username atau Hak Akses tidak ditemukan di database admin!', true);
+      await db.auth.signOut();
+      btn.disabled = false;
+      btn.innerText = 'Masuk ke Sistem';
       return;
     }
 
-    // Verifikasi Password (Jika di DB disimpan plain text)
-    if (data.password !== password) {
-      showAlert('Password yang Anda masukkan salah!');
+    // Validasi Peran (Case-insensitive)
+    const dbRole = (userData.peran || '').toLowerCase();
+    if (dbRole !== selectedRole) {
+      showAlert(`Hak Akses tidak cocok! Akun Anda terdaftar sebagai ${dbRole.toUpperCase()}.`, true);
+      await db.auth.signOut();
+      btn.disabled = false;
+      btn.innerText = 'Masuk ke Sistem';
       return;
     }
 
-    // Simpan session sederhana di browser
-    localStorage.setItem('user_session', JSON.stringify({
-      id: data.id,
-      nama: data.nama || username,
-      role: data.role
-    }));
-
-    // Arahkan ke halaman dashboard
-    alert('Login Berhasil sebagai ' + role.toUpperCase());
+    // 3. Simpan Sesi & Redirect
+    localStorage.setItem('user_role', dbRole);
+    localStorage.setItem('user_name', userData.nama || 'Petugas');
     window.location.href = 'dashboard.html';
   });
 
-  function showAlert(msg, show = true) {
+  function showAlert(msg, show) {
     const box = document.getElementById('alert-box');
-    if (!show) {
-      box.style.display = 'none';
-      return;
-    }
     box.innerText = msg;
-    box.style.display = 'block';
+    box.style.display = show ? 'block' : 'none';
   }
 </script>
 </body>
