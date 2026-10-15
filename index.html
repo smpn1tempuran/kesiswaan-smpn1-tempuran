@@ -18,11 +18,13 @@
     .form-group { margin-bottom: 18px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; color: #334155; font-size: 14px; }
     input, select { width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    input:disabled, select:disabled { background: #f1f5f9; cursor: not-allowed; color: #64748b; }
     .btn-group { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
     button { padding: 11px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
     .btn-next { background: #2563eb; color: white; flex: 1; }
     .btn-prev { background: #94a3b8; color: white; }
     .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+    .info-badge { background: #eff6ff; border-left: 4px solid #2563eb; padding: 10px; font-size: 13px; color: #1e40af; margin-bottom: 15px; border-radius: 0 6px 6px 0; }
   </style>
 </head>
 <body>
@@ -33,12 +35,12 @@
 
   <div class="step-indicator">
     <span id="ind-1" class="active">1. Identitas</span>
-    <span id="ind-2">2. Ekskul</span>
+    <span id="ind-2">2. Pilih Ekskul</span>
     <span id="ind-3">3. Konfirmasi</span>
   </div>
 
   <form id="form-pendaftaran">
-    <!-- Langkah 1 & 2 Alur Siswa: Identitas & Kelas -->
+    <!-- Langkah 1: Identitas -->
     <div class="step active" id="step-1">
       <div class="form-group">
         <label for="nisn">NISN</label>
@@ -50,49 +52,60 @@
       </div>
       <div class="form-group">
         <label for="kelas">Kelas</label>
-        <select id="kelas" required>
+        <select id="kelas" required onchange="handleKelasChange()">
           <option value="">-- Pilih Kelas --</option>
           <option value="7">Kelas 7</option>
           <option value="8">Kelas 8</option>
         </select>
       </div>
+
+      <!-- Option Khusus Dewan Penggalang untuk Kelas 8 -->
+      <div class="form-group" id="group-dp" style="display: none;">
+        <label for="is_dp">Status Anggota Dewan Penggalang (DP)?</label>
+        <select id="is_dp" onchange="handleKelasChange()">
+          <option value="tidak">Bukan Dewan Penggalang</option>
+          <option value="ya">Ya, Anggota Dewan Penggalang</option>
+        </select>
+      </div>
+
       <div class="btn-group">
         <div></div>
-        <button type="button" class="btn-next" onclick="nextStep(2)">Lanjut Pilihan Ekskul &rarr;</button>
+        <button type="button" class="btn-next" onclick="validateStep1()">Lanjut Pilih Ekskul &rarr;</button>
       </div>
     </div>
 
-    <!-- Langkah 3 Alur Siswa: Memilih Ekstrakurikuler -->
+    <!-- Langkah 2: Pemilihan Ekstrakurikuler -->
     <div class="step" id="step-2">
-      <div class="form-group">
-        <label for="ekskul1">Pilihan Utama (Wajib)</label>
+      <div id="info-rules" class="info-badge"></div>
+
+      <div class="form-group" id="group-ekskul1">
+        <label for="ekskul1" id="lbl-ekskul1">Pilihan Utama (Wajib)</label>
         <select id="ekskul1" required>
           <option value="">-- Pilih Ekskul Utama --</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="ekskul2">Pilihan 2 (Opsional)</label>
+      <div class="form-group" id="group-ekskul2">
+        <label for="ekskul2" id="lbl-ekskul2">Pilihan 2 (Opsional / Siswa)</label>
         <select id="ekskul2">
           <option value="">-- Tidak Memilih --</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="ekskul3">Pilihan 3 (Opsional)</label>
+      <div class="form-group" id="group-ekskul3">
+        <label for="ekskul3" id="lbl-ekskul3">Pilihan 3 (Opsional / Siswa)</label>
         <select id="ekskul3">
           <option value="">-- Tidak Memilih --</option>
         </select>
       </div>
+
       <div class="btn-group">
         <button type="button" class="btn-prev" onclick="nextStep(1)">&larr; Kembali</button>
         <button type="button" class="btn-next" onclick="prepareSummary()">Cek Konfirmasi &rarr;</button>
       </div>
     </div>
 
-    <!-- Langkah 4 Alur Siswa: Memeriksa Pilihan & Konfirmasi Final -->
+    <!-- Langkah 3: Konfirmasi Final -->
     <div class="step" id="step-3">
-      <div class="summary-box" id="summary-content">
-        <!-- Rincian akan diisi otomatis -->
-      </div>
+      <div class="summary-box" id="summary-content"></div>
       <div class="btn-group">
         <button type="button" class="btn-prev" onclick="nextStep(2)">&larr; Ubah Pilihan</button>
         <button type="submit" class="btn-next" id="btn-submit">Konfirmasi & Simpan</button>
@@ -107,16 +120,81 @@
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let ekskulList = [];
+  let pramukaId = null;
 
   async function loadEkskul() {
     const { data } = await db.from('extracurriculars').select('*').order('nama');
     if (data) {
       ekskulList = data;
-      const opts = data.map(e => `<option value="${e.id}">${e.nama}</option>`).join('');
-      document.getElementById('ekskul1').innerHTML += opts;
-      document.getElementById('ekskul2').innerHTML += opts;
-      document.getElementById('ekskul3').innerHTML += opts;
+      const pramuka = data.find(e => e.nama.toLowerCase().includes('pramuka'));
+      if (pramuka) pramukaId = pramuka.id;
+
+      populateDropdowns();
     }
+  }
+
+  function populateDropdowns() {
+    const opts = ekskulList.map(e => `<option value="${e.id}">${e.nama}</option>`).join('');
+    document.getElementById('ekskul1').innerHTML = '<option value="">-- Pilih Ekskul 1 --</option>' + opts;
+    document.getElementById('ekskul2').innerHTML = '<option value="">-- Pilih Ekskul 2 --</option>' + opts;
+    document.getElementById('ekskul3').innerHTML = '<option value="">-- Tidak Memilih --</option>' + opts;
+  }
+
+  function handleKelasChange() {
+    const kelas = document.getElementById('kelas').value;
+    const groupDp = document.getElementById('group-dp');
+    const isDp = document.getElementById('is_dp').value;
+
+    if (kelas === '8') {
+      groupDp.style.display = 'block';
+    } else {
+      groupDp.style.display = 'none';
+      document.getElementById('is_dp').value = 'tidak';
+    }
+
+    const ekskul1Select = document.getElementById('ekskul1');
+    const groupEkskul3 = document.getElementById('group-ekskul3');
+    const infoRules = document.getElementById('info-rules');
+
+    if (kelas === '7' || (kelas === '8' && isDp === 'ya')) {
+      // Wajib Pramuka + 2 Ekskul Pilihan
+      if (pramukaId) {
+        ekskul1Select.value = pramukaId;
+        ekskul1Select.disabled = true;
+      }
+      groupEkskul3.style.display = 'block';
+      document.getElementById('lbl-ekskul1').innerText = 'Pilihan Utama (Wajib Pramuka)';
+      document.getElementById('lbl-ekskul2').innerText = 'Pilihan Ekskul 2';
+      document.getElementById('lbl-ekskul3').innerText = 'Pilihan Ekskul 3';
+
+      infoRules.innerHTML = kelas === '7' 
+        ? '📌 <strong>Kelas 7:</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.'
+        : '📌 <strong>Dewan Penggalang (Kelas 8):</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.';
+    } else {
+      // Kelas 8 BUKAN Dewan Penggalang -> HANYA Memilih 2 Ekskul Pilihan (Pilihan 3 disembunyikan)
+      ekskul1Select.disabled = false;
+      ekskul1Select.value = '';
+      groupEkskul3.style.display = 'none';
+      document.getElementById('ekskul3').value = ''; // Reset nilai pilihan 3
+      
+      document.getElementById('lbl-ekskul1').innerText = 'Pilihan Ekskul 1';
+      document.getElementById('lbl-ekskul2').innerText = 'Pilihan Ekskul 2';
+
+      infoRules.innerHTML = '📌 <strong>Kelas 8 (Bukan Dewan Penggalang):</strong> Silakan memilih tepat 2 ekstrakurikuler pilihan.';
+    }
+  }
+
+  function validateStep1() {
+    const nisn = document.getElementById('nisn').value.trim();
+    const nama = document.getElementById('nama').value.trim();
+    const kelas = document.getElementById('kelas').value;
+
+    if (!nisn || !nama || !kelas) {
+      alert('Mohon lengkapi NISN, Nama Lengkap, dan Kelas terlebih dahulu.');
+      return;
+    }
+    handleKelasChange();
+    nextStep(2);
   }
 
   function nextStep(stepNum) {
@@ -135,15 +213,29 @@
     const e2 = ekskulList.find(e => e.id == document.getElementById('ekskul2').value);
     const e3 = ekskulList.find(e => e.id == document.getElementById('ekskul3').value);
 
-    document.getElementById('summary-content').innerHTML = `
+    if (!document.getElementById('ekskul1').value || !document.getElementById('ekskul2').value) {
+      alert('Mohon isi minimal 2 pilihan ekstrakurikuler!');
+      return;
+    }
+
+    const kelas = document.getElementById('kelas').value;
+    const isDp = document.getElementById('is_dp').value;
+    const showE3 = (kelas === '7' || (kelas === '8' && isDp === 'ya'));
+
+    let summaryHtml = `
       <strong>Konfirmasi Data Pendaftaran:</strong><br><br>
       • NISN: <strong>${document.getElementById('nisn').value}</strong><br>
       • Nama: <strong>${document.getElementById('nama').value}</strong><br>
-      • Kelas: <strong>Kelas ${document.getElementById('kelas').value}</strong><br>
+      • Kelas: <strong>Kelas ${kelas}</strong><br>
       • Pilihan 1: <strong>${e1 ? e1.nama : '-'}</strong><br>
-      • Pilihan 2: <strong>${e2 ? e2.nama : '-'}</strong><br>
-      • Pilihan 3: <strong>${e3 ? e3.nama : '-'}</strong>
+      • Pilihan 2: <strong>${e2 ? e2.nama : '-'}</strong>
     `;
+
+    if (showE3 && e3) {
+      summaryHtml += `<br>• Pilihan 3: <strong>${e3.nama}</strong>`;
+    }
+
+    document.getElementById('summary-content').innerHTML = summaryHtml;
     nextStep(3);
   }
 
@@ -157,7 +249,6 @@
     const nama = document.getElementById('nama').value.trim();
     const kelas = document.getElementById('kelas').value;
 
-    // Simpan data student
     const { data: student, error: errStudent } = await db.from('students').insert([{ nisn, nama_lengkap: nama, kelas }]).select().single();
 
     if (errStudent) {
@@ -165,7 +256,6 @@
       btn.disabled = false; return;
     }
 
-    // Simpan pilihan ekskul
     const { data: selection, error: errSel } = await db.from('selections').insert([{
       student_id: student.id,
       extracurricular_1_id: document.getElementById('ekskul1').value || null,
@@ -178,11 +268,10 @@
       btn.disabled = false; return;
     }
 
-    // Alur 5: Langsung buka Surat Pernyataan Kesanggupan
     window.location.href = `bukti.html?id=${selection.id}`;
   });
 
-  document.addEventListener('DOMContentLoaded', loadLoad = loadEkskul);
+  document.addEventListener('DOMContentLoaded', loadEkskul);
 </script>
 </body>
 </html>
