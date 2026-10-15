@@ -3,128 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portal Login - SMPN 1 Tempuran</title>
+  <title>Login Test - SMPN 1 Tempuran</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .card { width: 100%; max-width: 400px; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    h2 { text-align: center; color: #1e293b; margin-bottom: 5px; margin-top: 0; }
-    p.subtitle { text-align: center; color: #64748b; margin-top: 0; margin-bottom: 25px; font-size: 14px; }
-    .form-group { margin-bottom: 18px; }
-    label { font-weight: 600; display: block; margin-bottom: 6px; color: #334155; font-size: 14px; }
-    input, select, button { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-    button { background: #2563eb; color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; font-size: 15px; }
-    button:hover { background: #1d4ed8; }
-    .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 500; font-size: 13px; display: none; }
-    .alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-    .footer-link { text-align: center; margin-top: 20px; font-size: 13px; }
-    .footer-link a { color: #2563eb; text-decoration: none; }
+    body { font-family: sans-serif; background: #0f172a; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
+    .box { background: white; padding: 30px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    h3 { margin-top: 0; text-align: center; color: #1e293b; }
+    input, select, button { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 15px; }
+    #log { margin-top: 15px; padding: 10px; border-radius: 5px; font-size: 13px; display: none; word-break: break-word; }
+    .err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .ok { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Portal Login</h2>
-  <p class="subtitle">Sistem Ekskul SMPN 1 Tempuran</p>
+<div class="box">
+  <h3>Login Admin / Operator</h3>
+  <div id="log"></div>
 
-  <div id="alert-box" class="alert alert-danger"></div>
+  <form id="form-login">
+    <label>Email</label>
+    <input type="email" id="email" value="kesiswaan@smpn1tempuran.sch.id" required>
 
-  <form id="login-form">
-    <div class="form-group">
-      <label for="email">Username / Email</label>
-      <input type="email" id="email" required placeholder="Masukkan Email">
-    </div>
+    <label style="margin-top:10px; display:block;">Password</label>
+    <input type="password" id="password" placeholder="Masukkan Password" required>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <input type="password" id="password" required placeholder="Masukkan Password">
-    </div>
-
-    <div class="form-group">
-      <label for="role">Hak Akses / Role</label>
-      <select id="role" required>
-        <option value="operator">Operator</option>
-        <option value="admin">Admin</option>
-        <option value="kepsek">Kepala Sekolah</option>
-      </select>
-    </div>
-
-    <button type="submit" id="btn-submit">Masuk ke Sistem</button>
+    <button type="submit" id="btn">MASUK SISTEM</button>
   </form>
-
-  <div class="footer-link">
-    <a href="index.html">&larr; Kembali ke Form Pendaftaran Siswa</a>
-  </div>
 </div>
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NjE5MDV2M4cCI6MTI3NzM2NzA2NzM2q2jY1KybU81E';
-
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
+  function printLog(msg, isError = false) {
+    const box = document.getElementById('log');
+    box.style.display = 'block';
+    box.className = isError ? 'err' : 'ok';
+    box.innerText = msg;
+  }
+
+  document.getElementById('form-login').addEventListener('submit', async (e) => {
     e.preventDefault();
-    showAlert('', false);
+    const btn = document.getElementById('btn');
+    btn.disabled = true;
+    btn.innerText = 'Mencoba Login...';
 
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const selectedRole = document.getElementById('role').value.toLowerCase();
-    const btn = document.getElementById('btn-submit');
 
-    btn.disabled = true;
-    btn.innerText = 'Memeriksa...';
-
-    // 1. Authenticate Supabase Auth
-    const { data: authData, error: authError } = await db.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
+    // 1. Tes Auth
+    const { data: authData, error: authError } = await db.auth.signInWithPassword({ email, password });
 
     if (authError) {
-      showAlert('Login gagal: Email atau Password salah.', true);
+      printLog('GAGAL AUTH: ' + authError.message, true);
       btn.disabled = false;
-      btn.innerText = 'Masuk ke Sistem';
+      btn.innerText = 'MASUK SISTEM';
       return;
     }
 
-    // 2. Cek data di tabel admin_users
-    const userId = authData.user.id;
+    printLog('AUTH BERHASIL! Memeriksa data admin_users...');
+
+    // 2. Cek DB admin_users
     const { data: userData, error: userError } = await db
       .from('admin_users')
       .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', authData.user.id);
 
-    if (userError || !userData) {
-      showAlert('Username atau Hak Akses tidak ditemukan di database admin!', true);
-      await db.auth.signOut();
+    if (userError) {
+      printLog('GAGAL CEK TABEL: ' + userError.message, true);
       btn.disabled = false;
-      btn.innerText = 'Masuk ke Sistem';
+      btn.innerText = 'MASUK SISTEM';
       return;
     }
 
-    // Validasi Peran (Case-insensitive)
-    const dbRole = (userData.peran || '').toLowerCase();
-    if (dbRole !== selectedRole) {
-      showAlert(`Hak Akses tidak cocok! Akun Anda terdaftar sebagai ${dbRole.toUpperCase()}.`, true);
-      await db.auth.signOut();
+    if (!userData || userData.length === 0) {
+      printLog('USER_ID ' + authData.user.id + ' BELUM ADA DI TABEL admin_users!', true);
       btn.disabled = false;
-      btn.innerText = 'Masuk ke Sistem';
+      btn.innerText = 'MASUK SISTEM';
       return;
     }
 
-    // 3. Simpan Sesi & Redirect
-    localStorage.setItem('user_role', dbRole);
-    localStorage.setItem('user_name', userData.nama || 'Petugas');
-    window.location.href = 'dashboard.html';
+    printLog('LOGIN BERHASIL! Mengalihkan ke Dashboard...');
+    localStorage.setItem('user_role', userData[0].peran || 'operator');
+    localStorage.setItem('user_name', userData[0].nama || 'Petugas');
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
   });
-
-  function showAlert(msg, show) {
-    const box = document.getElementById('alert-box');
-    box.innerText = msg;
-    box.style.display = show ? 'block' : 'none';
-  }
 </script>
 </body>
 </html>
