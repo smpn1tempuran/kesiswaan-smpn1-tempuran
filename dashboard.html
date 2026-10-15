@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Pendaftaran Ekskul - SMPN 1 Tempuran</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8fafc; margin: 0; padding: 20px; }
+    .header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .header h2 { margin: 0; color: #1e3a8a; }
+    .user-info { display: flex; align-items: center; gap: 15px; }
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; background: #e2e8f0; color: #334155; }
+    .badge-admin { background: #dbeafe; color: #1e40af; }
+    .badge-operator { background: #dcfce7; color: #166534; }
+    .badge-kepsek { background: #fef3c7; color: #92400e; }
+    .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .btn-logout:hover { background: #dc2626; }
+    .content { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .table-container { overflow-x: auto; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+    th { background: #f1f5f9; color: #334155; }
+    tr:nth-child(even) { background: #f8fafc; }
+    .btn-print { background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
+    .btn-print:hover { background: #059669; }
+    @media print { .header, .btn-print { display: none; } body { background: white; padding: 0; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h2>Dashboard Pendaftaran Ekskul</h2>
+    <p style="margin: 5px 0 0; color: #64748b; font-size: 14px;">SMPN 1 Tempuran</p>
+  </div>
+  <div class="user-info">
+    <div>
+      <strong id="display-name">-</strong>
+      <span id="display-role" class="badge">-</span>
+    </div>
+    <button class="btn-logout" onclick="logout()">Keluar</button>
+  </div>
+</div>
+
+<div class="content">
+  <button class="btn-print" onclick="window.print()">🖨️ Cetak Laporan</button>
+  
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>NISN</th>
+          <th>Nama Lengkap</th>
+          <th>Kelas</th>
+          <th>Pilihan 1</th>
+          <th>Pilihan 2</th>
+          <th>Pilihan 3</th>
+          <th>Tanggal Daftar</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr>
+          <td colspan="8" style="text-align: center;">Memuat data...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
+  
+  // Ambil Anon Key dari login.html kamu sebelumnya yang sudah berhasil
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
+
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function checkAuth() {
+    const { data: { session } } = await db.auth.getSession();
+    if (!session) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    const userName = localStorage.getItem('user_name') || 'Petugas';
+    const userRole = localStorage.getItem('user_role') || 'operator';
+
+    document.getElementById('display-name').innerText = userName;
+    const roleBadge = document.getElementById('display-role');
+    roleBadge.innerText = userRole;
+    roleBadge.className = 'badge badge-' + userRole;
+
+    loadData();
+  }
+
+  async function loadData() {
+    const { data, error } = await db
+      .from('selections')
+      .select(`
+        id,
+        created_at,
+        students ( nisn, nama_lengkap, kelas ),
+        e1:extracurricular_1_id ( nama ),
+        e2:extracurricular_2_id ( nama ),
+        e3:extracurricular_3_id ( nama )
+      `)
+      .order('created_at', { ascending: false });
+
+    const tbody = document.getElementById('table-body');
+
+    if (error) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:red;">Gagal memuat data: ${error.message}</td></tr>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">Belum ada pendaftaran siswa.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map((item, index) => {
+      const student = item.students || {};
+      const date = new Date(item.created_at).toLocaleDateString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${student.nisn || '-'}</td>
+          <td>${student.nama_lengkap || '-'}</td>
+          <td>Kelas ${student.kelas || '-'}</td>
+          <td>${item.e1 ? item.e1.nama : '-'}</td>
+          <td>${item.e2 ? item.e2.nama : '-'}</td>
+          <td>${item.e3 ? item.e3.nama : '-'}</td>
+          <td>${date}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+
+  document.addEventListener('DOMContentLoaded', checkAuth);
+</script>
+</body>
+</html>
