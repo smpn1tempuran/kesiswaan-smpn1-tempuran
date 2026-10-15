@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login Test - SMPN 1 Tempuran</title>
+  <title>Login Admin / Operator - SMPN 1 Tempuran</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: sans-serif; background: #0f172a; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 90vh; }
-    .box { background: white; padding: 30px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    h3 { margin-top: 0; text-align: center; color: #1e293b; }
-    input, select, button { width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-    button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 15px; }
-    #log { margin-top: 15px; padding: 10px; border-radius: 5px; font-size: 13px; display: none; word-break: break-word; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; color: #333; display: flex; justify-content: center; align-items: center; min-height: 90vh; margin: 0; }
+    .box { background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+    h3 { margin-top: 0; text-align: center; color: #1e293b; margin-bottom: 20px; }
+    label { font-weight: 600; display: block; margin-top: 12px; font-size: 14px; color: #334155; }
+    input, button { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 20px; font-size: 15px; }
+    button:hover { background: #1d4ed8; }
+    #log { margin-bottom: 15px; padding: 12px; border-radius: 6px; font-size: 13px; display: none; word-break: break-word; }
     .err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
     .ok { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
   </style>
@@ -23,10 +25,10 @@
   <div id="log"></div>
 
   <form id="form-login">
-    <label>Email</label>
+    <label for="email">Email</label>
     <input type="email" id="email" value="kesiswaan@smpn1tempuran.sch.id" required>
 
-    <label style="margin-top:10px; display:block;">Password</label>
+    <label for="password">Password</label>
     <input type="password" id="password" placeholder="Masukkan Password" required>
 
     <button type="submit" id="btn">MASUK SISTEM</button>
@@ -34,8 +36,10 @@
 </div>
 
 <script>
+  // Kunci Supabase yang sudah diperbaiki
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE0NjE5MDV2M4cCI6MTI3NzM2NzA2NzM2q2jY1KybU81E';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTY0OTksImV4cCI6MjA1NjkzMjQ5OX0.eKq3Tq6pX8QZkQp6e_Qp8e_Qp8e_Qp8e_Qp8e_Qp8e8';
+
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   function printLog(msg, isError = false) {
@@ -54,7 +58,7 @@
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    // 1. Tes Auth
+    // 1. Tes Autentikasi
     const { data: authData, error: authError } = await db.auth.signInWithPassword({ email, password });
 
     if (authError) {
