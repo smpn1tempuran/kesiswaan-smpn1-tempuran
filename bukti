@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Surat Pernyataan Kesanggupan Mengikuti Ekstrakurikuler</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Library konversi HTML ke Gambar PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; color: #ffffff; }
+    
+    .action-bar { width: 100%; max-width: 700px; margin-bottom: 20px; display: flex; gap: 10px; }
+    .btn-download { background: #2563eb; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; flex: 1; text-align: center; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .btn-download:hover { background: #1d4ed8; }
+
+    /* Container Surat Berlatar Belakang Gelap Sesuai Contoh Gambar */
+    .surat-container { background: #000000; width: 100%; max-width: 700px; padding: 40px; border-radius: 8px; box-sizing: border-box; font-size: 15px; line-height: 1.6; color: #ffffff; }
+    
+    .header-title { text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px; text-transform: uppercase; }
+    .header-sub { text-align: center; font-size: 15px; margin-bottom: 30px; text-transform: uppercase; }
+
+    ul { list-style-type: disc; margin-top: 10px; margin-bottom: 20px; padding-left: 25px; }
+    ul li { margin-bottom: 6px; }
+
+    ol { margin-top: 10px; margin-bottom: 20px; padding-left: 25px; font-weight: bold; }
+    ol li { margin-bottom: 6px; }
+
+    p { margin-bottom: 18px; text-align: justify; }
+
+    .signature-area { display: flex; justify-content: space-between; margin-top: 40px; text-align: center; }
+    .sig-box { width: 45%; }
+    .sig-space { height: 70px; }
+
+    @media print { 
+      .action-bar { display: none; } 
+      body { background: black; padding: 0; } 
+      .surat-container { box-shadow: none; border-radius: 0; } 
+    }
+  </style>
+</head>
+<body>
+
+<div class="action-bar">
+  <button class="btn-download" id="btn-download" onclick="downloadImage()">📸 Simpan Sebagai Gambar (PNG)</button>
+</div>
+
+<!-- Area Surat Pernyataan -->
+<div class="surat-container" id="surat-area">
+  <div class="header-title">SURAT PERNYATAAN KESANGGUPAN MENGIKUTI EKSTRAKURIKULER</div>
+  <div class="header-sub">SMP NEGERI 1 TEMPURAN</div>
+
+  <p>Yang bertanda tangan di bawah ini:</p>
+
+  <ul>
+    <li><strong>Nama:</strong> <span id="lbl-nama">[Nama siswa]</span></li>
+    <li><strong>NIS/NISN:</strong> <span id="lbl-nisn">[Nomor identitas]</span></li>
+    <li><strong>Kelas:</strong> <span id="lbl-kelas">[Kelas]</span></li>
+    <li><strong>Tahun Pelajaran:</strong> <span id="lbl-tapel">2026/2027</span></li>
+  </ul>
+
+  <p>Dengan ini menyatakan bahwa saya memilih dan bersedia mengikuti kegiatan ekstrakurikuler berikut:</p>
+
+  <ol>
+    <li id="lbl-e1">[Pilihan ekstrakurikuler pertama]</li>
+    <li id="lbl-e2" style="display: list-item;">[Pilihan ekstrakurikuler kedua]</li>
+    <li id="lbl-e3" style="display: none;">[Pilihan ekstrakurikuler ketiga]</li>
+  </ol>
+
+  <p>Saya menyatakan bersedia mengikuti kegiatan ekstrakurikuler yang telah saya pilih dengan sungguh-sungguh, disiplin, dan penuh tanggung jawab selama satu tahun pelajaran. Saya juga berkomitmen untuk tidak berpindah ekstrakurikuler selama periode tersebut, kecuali apabila terdapat ketentuan atau persetujuan khusus dari pihak sekolah.</p>
+
+  <p>Demikian surat pernyataan ini saya buat dengan sebenar-benarnya untuk dilaksanakan dengan penuh tanggung jawab.</p>
+
+  <div class="signature-area">
+    <div class="sig-box">
+      Mengetahui,<br>Orang Tua/Wali
+      <div class="sig-space"></div>
+      ( ..................................... )
+    </div>
+    <div class="sig-box">
+      Tempuran, <span id="lbl-tgl">..................</span><br>Siswa yang bersangkutan
+      <div class="sig-space"></div>
+      <strong id="lbl-nama-ttd">( ..................................... )</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
+  const SUPABASE_ANON_KEY = 'PASTE_KUNCI_ANON_PUBLIC_SUPABASE_DI_SINI';
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let studentName = 'Siswa';
+
+  async function loadDetail() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+
+    if (!id) return;
+
+    const { data } = await db.from('selections').select(`
+      created_at,
+      students ( nisn, nama_lengkap, kelas ),
+      e1:extracurricular_1_id ( nama ),
+      e2:extracurricular_2_id ( nama ),
+      e3:extracurricular_3_id ( nama )
+    `).eq('id', id).single();
+
+    if (data) {
+      studentName = data.students.nama_lengkap;
+      document.getElementById('lbl-nama').innerText = data.students.nama_lengkap;
+      document.getElementById('lbl-nama-ttd').innerText = data.students.nama_lengkap;
+      document.getElementById('lbl-nisn').innerText = data.students.nisn;
+      document.getElementById('lbl-kelas').innerText = 'Kelas ' + data.students.kelas;
+      
+      // Mengisi Pilihan Ekskul
+      document.getElementById('lbl-e1').innerText = data.e1 ? data.e1.nama : '-';
+      
+      if (data.e2 && data.e2.nama) {
+        document.getElementById('lbl-e2').innerText = data.e2.nama;
+        document.getElementById('lbl-e2').style.display = 'list-item';
+      } else {
+        document.getElementById('lbl-e2').style.display = 'none';
+      }
+
+      if (data.e3 && data.e3.nama) {
+        document.getElementById('lbl-e3').innerText = data.e3.nama;
+        document.getElementById('lbl-e3').style.display = 'list-item';
+      }
+
+      // Format Tanggal
+      document.getElementById('lbl-tgl').innerText = new Date(data.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+  }
+
+  // Fungsi Konversi HTML ke Gambar PNG
+  function downloadImage() {
+    const btn = document.getElementById('btn-download');
+    btn.disabled = true;
+    btn.innerText = 'Mengunduh Gambar...';
+
+    const element = document.getElementById('surat-area');
+
+    html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#000000'
+    }).then(canvas => {
+      const link = document.createElement('a');
+      link.download = `Surat_Pernyataan_${studentName.replace(/\s+/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+
+      btn.disabled = false;
+      btn.innerText = '📸 Simpan Sebagai Gambar (PNG)';
+    }).catch(err => {
+      alert('Gagal mengunduh gambar: ' + err.message);
+      btn.disabled = false;
+      btn.innerText = '📸 Simpan Sebagai Gambar (PNG)';
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', loadDetail);
+</script>
+</body>
+</html>
