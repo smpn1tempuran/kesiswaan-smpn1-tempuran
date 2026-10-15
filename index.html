@@ -3,231 +3,186 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Pendaftaran Ekskul - SMPN 1 Tempuran</title>
+  <title>Pendaftaran Ekskul - SMPN 1 Tempuran</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; padding: 20px; }
-    .card { max-width: 500px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    h2 { text-align: center; color: #1e3a8a; margin-bottom: 5px; }
-    p.subtitle { text-align: center; color: #64748b; margin-top: 0; margin-bottom: 25px; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; display: flex; justify-content: center; }
+    .container { background: #fff; width: 100%; max-width: 600px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    h2 { text-align: center; color: #1e3a8a; margin-top: 0; }
+    p.sub { text-align: center; color: #64748b; margin-top: -10px; margin-bottom: 25px; font-size: 14px; }
+    .step-indicator { display: flex; justify-content: space-between; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    .step-indicator span { font-size: 12px; font-weight: bold; color: #94a3b8; }
+    .step-indicator span.active { color: #2563eb; }
+    .step { display: none; }
+    .step.active { display: block; }
     .form-group { margin-bottom: 18px; }
-    label { font-weight: 600; display: block; margin-bottom: 6px; color: #334155; }
-    input, select, button { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-    button { background: #2563eb; color: #fff; font-weight: bold; border: none; cursor: pointer; margin-top: 15px; font-size: 16px; }
-    button:hover { background: #1d4ed8; }
-    .alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 500; display: none; }
-    .alert-danger { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-    .alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-    .info-text { font-size: 12px; color: #2563eb; margin-top: 4px; font-weight: 500; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; color: #334155; font-size: 14px; }
+    input, select { width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    .btn-group { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+    button { padding: 11px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .btn-next { background: #2563eb; color: white; flex: 1; }
+    .btn-prev { background: #94a3b8; color: white; }
+    .summary-box { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.6; }
   </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Form Pendaftaran Ekskul</h2>
-  <p class="subtitle">SMPN 1 Tempuran</p>
-  
-  <div id="alert-box" class="alert"></div>
+<div class="container">
+  <h2>SMPN 1 TEMPURAN</h2>
+  <p class="sub">Formulir Pendaftaran Ekstrakurikuler</p>
 
-  <form id="ekskul-form">
-    <div class="form-group">
-      <label for="nisn">NISN</label>
-      <input type="text" id="nisn" required placeholder="Masukkan NISN">
+  <div class="step-indicator">
+    <span id="ind-1" class="active">1. Identitas</span>
+    <span id="ind-2">2. Ekskul</span>
+    <span id="ind-3">3. Konfirmasi</span>
+  </div>
+
+  <form id="form-pendaftaran">
+    <!-- Langkah 1 & 2 Alur Siswa: Identitas & Kelas -->
+    <div class="step active" id="step-1">
+      <div class="form-group">
+        <label for="nisn">NISN</label>
+        <input type="text" id="nisn" required placeholder="Masukkan NISN">
+      </div>
+      <div class="form-group">
+        <label for="nama">Nama Lengkap</label>
+        <input type="text" id="nama" required placeholder="Masukkan Nama Lengkap">
+      </div>
+      <div class="form-group">
+        <label for="kelas">Kelas</label>
+        <select id="kelas" required>
+          <option value="">-- Pilih Kelas --</option>
+          <option value="7">Kelas 7</option>
+          <option value="8">Kelas 8</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <div></div>
+        <button type="button" class="btn-next" onclick="nextStep(2)">Lanjut Pilihan Ekskul &rarr;</button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="nama">Nama Lengkap</label>
-      <input type="text" id="nama" required placeholder="Masukkan Nama Lengkap">
+    <!-- Langkah 3 Alur Siswa: Memilih Ekstrakurikuler -->
+    <div class="step" id="step-2">
+      <div class="form-group">
+        <label for="ekskul1">Pilihan Utama (Wajib)</label>
+        <select id="ekskul1" required>
+          <option value="">-- Pilih Ekskul Utama --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ekskul2">Pilihan 2 (Opsional)</label>
+        <select id="ekskul2">
+          <option value="">-- Tidak Memilih --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="ekskul3">Pilihan 3 (Opsional)</label>
+        <select id="ekskul3">
+          <option value="">-- Tidak Memilih --</option>
+        </select>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn-prev" onclick="nextStep(1)">&larr; Kembali</button>
+        <button type="button" class="btn-next" onclick="prepareSummary()">Cek Konfirmasi &rarr;</button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="kelas">Kelas</label>
-      <!-- HANYA KELAS 7 DAN KELAS 8 -->
-      <select id="kelas" required onchange="handleKelasChange()">
-        <option value="">-- Pilih Kelas --</option>
-        <option value="7">Kelas 7</option>
-        <option value="8">Kelas 8</option>
-      </select>
+    <!-- Langkah 4 Alur Siswa: Memeriksa Pilihan & Konfirmasi Final -->
+    <div class="step" id="step-3">
+      <div class="summary-box" id="summary-content">
+        <!-- Rincian akan diisi otomatis -->
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn-prev" onclick="nextStep(2)">&larr; Ubah Pilihan</button>
+        <button type="submit" class="btn-next" id="btn-submit">Konfirmasi & Simpan</button>
+      </div>
     </div>
-
-    <!-- Pilihan Ekskul 1 -->
-    <div id="group-ekskul-1" class="form-group" style="display: none;">
-      <label for="ekskul1" id="label-ekskul1">Pilihan 1 (Wajib)</label>
-      <select id="ekskul1" class="ekskul-select" required></select>
-      <div id="info-pramuka" class="info-text" style="display: none;">* Pramuka otomatis wajib untuk siswa Kelas 7</div>
-    </div>
-
-    <!-- Pilihan Ekskul 2 -->
-    <div id="group-ekskul-2" class="form-group" style="display: none;">
-      <label for="ekskul2" id="label-ekskul2">Pilihan Ekskul 1</label>
-      <select id="ekskul2" class="ekskul-select" required></select>
-    </div>
-
-    <!-- Pilihan Ekskul 3 -->
-    <div id="group-ekskul-3" class="form-group" style="display: none;">
-      <label for="ekskul3" id="label-ekskul3">Pilihan Ekskul 2</label>
-      <select id="ekskul3" class="ekskul-select"></select>
-    </div>
-
-    <button type="submit">Kirim Pendaftaran</button>
   </form>
 </div>
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // ISI DENGAN KUNCI eyJ... DARI TAB LEGACY ANON SUPABASE
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E'
-
+  const SUPABASE_ANON_KEY = 'PASTE_KUNCI_ANON_PUBLIC_SUPABASE_DI_SINI';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  let listEkskul = [];
-  let idPramuka = null;
 
-  async function loadEkskulData() {
-    const { data, error } = await db
-      .from('extracurriculars')
-      .select('*');
+  let ekskulList = [];
 
-    if (error) {
-      console.error('Gagal mengambil data ekskul:', error.message);
-      showAlert('Gagal memuat ekskul: ' + error.message, 'danger');
-      return;
-    }
-
+  async function loadEkskul() {
+    const { data } = await db.from('extracurriculars').select('*').order('nama');
     if (data) {
-      listEkskul = data;
-      // Cari ID Pramuka secara otomatis
-      const pramukaObj = listEkskul.find(e => e.nama.toLowerCase().includes('pramuka'));
-      if (pramukaObj) {
-        idPramuka = pramukaObj.id;
-      }
+      ekskulList = data;
+      const opts = data.map(e => `<option value="${e.id}">${e.nama}</option>`).join('');
+      document.getElementById('ekskul1').innerHTML += opts;
+      document.getElementById('ekskul2').innerHTML += opts;
+      document.getElementById('ekskul3').innerHTML += opts;
     }
   }
 
-  function handleKelasChange() {
-    const kelas = document.getElementById('kelas').value;
-    const g1 = document.getElementById('group-ekskul-1');
-    const g2 = document.getElementById('group-ekskul-2');
-    const g3 = document.getElementById('group-ekskul-3');
-    
-    const e1 = document.getElementById('ekskul1');
-    const e2 = document.getElementById('ekskul2');
-    const e3 = document.getElementById('ekskul3');
-    
-    const l1 = document.getElementById('label-ekskul1');
-    const l2 = document.getElementById('label-ekskul2');
-    const l3 = document.getElementById('label-ekskul3');
-    const infoPramuka = document.getElementById('info-pramuka');
+  function nextStep(stepNum) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + stepNum).classList.add('active');
 
-    if (!kelas) {
-      g1.style.display = g2.style.display = g3.style.display = 'none';
-      return;
-    }
-
-    g1.style.display = g2.style.display = 'block';
-
-    // Daftar ekskul tanpa pramuka
-    const pilihanBiasa = listEkskul.filter(item => item.id !== idPramuka);
-    const optionsBiasaHTML = '<option value="">-- Pilih Ekskul --</option>' + 
-      pilihanBiasa.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
-
-    if (kelas === '7') {
-      // KELAS 7: Pramuka (Wajib) + 2 Ekskul Pilihan (Total 3)
-      g3.style.display = 'block';
-      e3.required = true;
-
-      l1.innerText = 'Ekskul Wajib';
-      e1.innerHTML = `<option value="${idPramuka}">Pramuka (Wajib)</option>`;
-      e1.disabled = true;
-      infoPramuka.style.display = 'block';
-
-      l2.innerText = 'Pilihan Ekskul 1';
-      e2.innerHTML = optionsBiasaHTML;
-
-      l3.innerText = 'Pilihan Ekskul 2';
-      e3.innerHTML = optionsBiasaHTML;
-    } else if (kelas === '8') {
-      // KELAS 8: Hanya 2 Ekskul Pilihan (Bebas)
-      g3.style.display = 'none';
-      e3.required = false;
-
-      e1.disabled = false;
-      infoPramuka.style.display = 'none';
-
-      const optionsSemuaHTML = '<option value="">-- Pilih Ekskul --</option>' + 
-        listEkskul.map(item => `<option value="${item.id}">${item.nama}</option>`).join('');
-
-      l1.innerText = 'Pilihan Ekskul 1';
-      e1.innerHTML = optionsSemuaHTML;
-
-      l2.innerText = 'Pilihan Ekskul 2';
-      e2.innerHTML = optionsSemuaHTML;
+    for (let i = 1; i <= 3; i++) {
+      const ind = document.getElementById('ind-' + i);
+      if (i === stepNum) ind.classList.add('active');
+      else ind.classList.remove('active');
     }
   }
 
-  document.getElementById('ekskul-form').addEventListener('submit', async (e) => {
+  function prepareSummary() {
+    const e1 = ekskulList.find(e => e.id == document.getElementById('ekskul1').value);
+    const e2 = ekskulList.find(e => e.id == document.getElementById('ekskul2').value);
+    const e3 = ekskulList.find(e => e.id == document.getElementById('ekskul3').value);
+
+    document.getElementById('summary-content').innerHTML = `
+      <strong>Konfirmasi Data Pendaftaran:</strong><br><br>
+      • NISN: <strong>${document.getElementById('nisn').value}</strong><br>
+      • Nama: <strong>${document.getElementById('nama').value}</strong><br>
+      • Kelas: <strong>Kelas ${document.getElementById('kelas').value}</strong><br>
+      • Pilihan 1: <strong>${e1 ? e1.nama : '-'}</strong><br>
+      • Pilihan 2: <strong>${e2 ? e2.nama : '-'}</strong><br>
+      • Pilihan 3: <strong>${e3 ? e3.nama : '-'}</strong>
+    `;
+    nextStep(3);
+  }
+
+  document.getElementById('form-pendaftaran').addEventListener('submit', async (e) => {
     e.preventDefault();
-    showAlert('', 'none');
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.innerText = 'Menyimpan...';
 
-    const nisn = document.getElementById('nisn').value;
-    const nama = document.getElementById('nama').value;
+    const nisn = document.getElementById('nisn').value.trim();
+    const nama = document.getElementById('nama').value.trim();
     const kelas = document.getElementById('kelas').value;
-    const e1 = document.getElementById('ekskul1');
-    
-    const p1 = kelas === '7' ? idPramuka : e1.value;
-    const p2 = document.getElementById('ekskul2').value;
-    const p3 = kelas === '7' ? document.getElementById('ekskul3').value : null;
 
-    if (!p1 || !p2 || (kelas === '7' && !p3)) {
-      showAlert('Silakan lengkapi semua pilihan ekskul!', 'danger');
-      return;
-    }
-
-    if (p1 === p2 || (kelas === '7' && (p1 === p3 || p2 === p3)) || (p2 === p3 && p3 !== null)) {
-      showAlert('Ekskul pilihan tidak boleh ada yang sama!', 'danger');
-      return;
-    }
-
-    const { data: student, error: errStudent } = await db
-  .from('students')
-  .insert([{ nisn, nama_lengkap: nama, kelas: parseInt(kelas) }])
-  .select()
-  .single();
+    // Simpan data student
+    const { data: student, error: errStudent } = await db.from('students').insert([{ nisn, nama_lengkap: nama, kelas }]).select().single();
 
     if (errStudent) {
-      showAlert('Gagal menyimpan data siswa: ' + errStudent.message, 'danger');
-      return;
+      alert('Gagal simpan data siswa: ' + errStudent.message);
+      btn.disabled = false; return;
     }
 
-    const { error: errSelection } = await db
-      .from('selections')
-      .insert([{
-        student_id: student.id,
-        extracurricular_1_id: p1,
-        extracurricular_2_id: p2,
-        extracurricular_3_id: p3
-      }]);
+    // Simpan pilihan ekskul
+    const { data: selection, error: errSel } = await db.from('selections').insert([{
+      student_id: student.id,
+      extracurricular_1_id: document.getElementById('ekskul1').value || null,
+      extracurricular_2_id: document.getElementById('ekskul2').value || null,
+      extracurricular_3_id: document.getElementById('ekskul3').value || null
+    }]).select().single();
 
-    if (errSelection) {
-      showAlert('Gagal menyimpan pilihan ekskul: ' + errSelection.message, 'danger');
-    } else {
-      showAlert('Pendaftaran berhasil disimpan!', 'success');
-      document.getElementById('ekskul-form').reset();
-      handleKelasChange();
+    if (errSel) {
+      alert('Gagal simpan pilihan ekskul: ' + errSel.message);
+      btn.disabled = false; return;
     }
+
+    // Alur 5: Langsung buka Surat Pernyataan Kesanggupan
+    window.location.href = `bukti.html?id=${selection.id}`;
   });
 
-  function showAlert(msg, type) {
-    const box = document.getElementById('alert-box');
-    if (type === 'none') {
-      box.style.display = 'none';
-      return;
-    }
-    box.className = 'alert alert-' + type;
-    box.innerText = msg;
-    box.style.display = 'block';
-  }
-
-  document.addEventListener('DOMContentLoaded', loadEkskulData);
+  document.addEventListener('DOMContentLoaded', loadLoad = loadEkskul);
 </script>
 </body>
 </html>
