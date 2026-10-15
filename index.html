@@ -247,8 +247,9 @@
 
     const nisn = document.getElementById('nisn').value.trim();
     const nama = document.getElementById('nama').value.trim();
-    const kelas = document.getElementById('kelas').value;
+    const kelas = parseInt(document.getElementById('kelas').value);
 
+    // 1. Simpan/Update Siswa
     const { data: student, error: errStudent } = await db.from('students').insert([{ nisn, nama_lengkap: nama, kelas }]).select().single();
 
     if (errStudent) {
@@ -256,11 +257,22 @@
       btn.disabled = false; return;
     }
 
+    const e1 = document.getElementById('ekskul1').value || null;
+    const e2 = document.getElementById('ekskul2').value || null;
+    let e3 = document.getElementById('ekskul3').value || null;
+
+    // Jika Kelas 8 Non-DP, paksa e3 menjadi null
+    const isDp = document.getElementById('is_dp').value;
+    if (kelas === 8 && isDp === 'tidak') {
+      e3 = null;
+    }
+
+    // 2. Simpan Pilihan
     const { data: selection, error: errSel } = await db.from('selections').insert([{
       student_id: student.id,
-      extracurricular_1_id: document.getElementById('ekskul1').value || null,
-      extracurricular_2_id: document.getElementById('ekskul2').value || null,
-      extracurricular_3_id: document.getElementById('ekskul3').value || null
+      extracurricular_1_id: e1,
+      extracurricular_2_id: e2,
+      extracurricular_3_id: e3
     }]).select().single();
 
     if (errSel) {
