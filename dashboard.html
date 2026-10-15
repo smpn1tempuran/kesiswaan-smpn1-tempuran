@@ -45,6 +45,7 @@
     .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 15px; }
     input, select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; }
     .total-box { margin-top: 18px; font-size: 16px; font-weight: bold; text-align: right; color: #1e3a8a; }
+    .action-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
   </style>
 </head>
 <body>
@@ -160,7 +161,7 @@
     <div class="total-box" id="rab-total-display">Total RAB: Rp 0</div>
   </div>
 
-  <!-- 6. Penilaian Ekstrakurikuler (Tampil untuk Admin & Pengampu) -->
+  <!-- 6. Penilaian Ekstrakurikuler (FITUR BARU DOWNLOAD & UPLOAD NILAI) -->
   <div id="p-nilai" class="panel">
     <h3>Penilaian Ekstrakurikuler</h3>
     <div class="form-row">
@@ -168,7 +169,16 @@
         <option value="">-- Pilih Ekstrakurikuler --</option>
       </select>
     </div>
-    <table>
+
+    <!-- Tombol Aksi Download & Upload khusus per Ekskul -->
+    <div class="action-group">
+      <button class="btn btn-success" onclick="downloadDaftarSiswaEkskulCSV()">📥 Download Daftar Siswa (CSV)</button>
+      <button class="btn btn-warning" onclick="downloadDaftarSiswaEkskulPDF()">📄 Download PDF Anggota</button>
+      <button class="btn btn-primary" onclick="triggerFileInput()">📤 Upload File Nilai (CSV)</button>
+      <input type="file" id="file-upload-nilai" accept=".csv" style="display:none;" onchange="uploadNilaiCSV(event)">
+    </div>
+
+    <table id="tbl-penilaian-container">
       <thead>
         <tr>
           <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Nilai Predikat</th><th>Catatan Pembina</th><th>Aksi</th>
@@ -206,12 +216,14 @@
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
+  // INGAT PASTE ANON KEY SUPABASE MILIKMU DI SINI:
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let rawSelections = [];
   let rawStudents = [];
   let rawEkskul = [];
+  let currentFilteredEkskulSiswa = [];
   let rabItems = [];
   let userSession = null;
 
@@ -225,12 +237,8 @@
     userSession = JSON.parse(sessionStr);
     document.getElementById('lbl-user-info').innerText = `${userSession.email} (${userSession.role.toUpperCase()})`;
 
-    // JIKA USER ADALAH PENGAMPU
     if (userSession.role === 'pengampu') {
-      // Sembunyikan seluruh tombol menu admin di sidebar
       document.querySelectorAll('.admin-menu').forEach(el => el.style.display = 'none');
-      
-      // Buka langsung panel Penilaian Ekskul
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('p-nilai').classList.add('active');
       document.getElementById('btn-menu-nilai').classList.add('active');
@@ -247,7 +255,6 @@
   async function loadDashboardData() {
     checkAuthRole();
 
-    // 1. Fetch Ekstrakurikuler
     const { data: eData } = await db.from('extracurriculars').select('*').order('nama');
     if (eData) {
       rawEkskul = eData;
@@ -258,7 +265,6 @@
       const selEkskul = document.getElementById('sel-ekskul-nilai');
       selEkskul.innerHTML = '<option value="">-- Pilih Ekstrakurikuler --</option>' + opts;
 
-      // Jika user pengampu di-assign ke ekskul tertentu, kunci dropdownnya
       if (userSession && userSession.role === 'pengampu' && userSession.ekskul_id) {
         selEkskul.value = userSession.ekskul_id;
         selEkskul.disabled = true;
@@ -266,7 +272,6 @@
       }
     }
 
-    // 2. Fetch Siswa
     const { data: sData } = await db.from('students').select('*').order('nama_lengkap');
     if (sData) {
       rawStudents = sData;
@@ -274,7 +279,6 @@
         sData.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.nisn})</option>`).join('');
     }
 
-    // 3. Fetch Selections
     const { data: selData } = await db.from('selections').select(`
       id,
       students ( id, nisn, nama_lengkap, kelas ),
@@ -294,39 +298,155 @@
     loadPrestasi();
   }
 
-  function loadSiswaByEkskul() {
+  // --- LOGIKA PENILAIAN, DOWNLOAD DAFTAR SISWA, & UPLOAD NILAI ---
+  async function loadSiswaByEkskul() {
     const ekskulId = document.getElementById('sel-ekskul-nilai').value;
     const tbody = document.getElementById('tbl-penilaian');
 
     if (!ekskulId) {
       tbody.innerHTML = '';
+      currentFilteredEkskulSiswa = [];
       return;
     }
 
-    const filtered = rawSelections.filter(s => 
+    const { data: existingGrades } = await db.from('grades').select('*').eq('extracurricular_id', ekskulId);
+    const gradeMap = {};
+    if (existingGrades) {
+      existingGrades.forEach(g => { gradeMap[g.student_id] = g; });
+    }
+
+    currentFilteredEkskulSiswa = rawSelections.filter(s => 
       (s.e1 && s.e1.id === ekskulId) || 
       (s.e2 && s.e2.id === ekskulId) || 
       (s.e3 && s.e3.id === ekskulId)
     );
 
-    tbody.innerHTML = filtered.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${item.students ? item.students.nisn : '-'}</td>
-        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
-        <td>
-          <select style="width:70px">
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-          </select>
-        </td>
-        <td><input type="text" placeholder="Catatan perkembangan..." style="width:100%"></td>
-        <td><button class="btn btn-success" onclick="alert('Nilai berhasil disimpan!')">Simpan</button></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = currentFilteredEkskulSiswa.map((item, idx) => {
+      const studentId = item.students ? item.students.id : '';
+      const savedGrade = gradeMap[studentId] || {};
+      const predikatVal = savedGrade.predikat || 'B';
+      const catatanVal = savedGrade.catatan || '';
+
+      return `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${item.students ? item.students.nisn : '-'}</td>
+          <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
+          <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
+          <td>
+            <select id="pred-${studentId}" style="width:70px">
+              <option value="A" ${predikatVal === 'A' ? 'selected' : ''}>A</option>
+              <option value="B" ${predikatVal === 'B' ? 'selected' : ''}>B</option>
+              <option value="C" ${predikatVal === 'C' ? 'selected' : ''}>C</option>
+              <option value="D" ${predikatVal === 'D' ? 'selected' : ''}>D</option>
+            </select>
+          </td>
+          <td><input type="text" id="cat-${studentId}" value="${catatanVal}" placeholder="Catatan perkembangan..." style="width:100%"></td>
+          <td><button class="btn btn-success" onclick="saveNilaiSiswa('${studentId}', '${ekskulId}')">Simpan</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function saveNilaiSiswa(studentId, ekskulId) {
+    if (!studentId || !ekskulId) return alert('Data tidak valid!');
+    const predikat = document.getElementById(`pred-${studentId}`).value;
+    const catatan = document.getElementById(`cat-${studentId}`).value.trim();
+
+    const { error } = await db.from('grades').upsert([{
+      student_id: studentId,
+      extracurricular_id: ekskulId,
+      predikat: predikat,
+      catatan: catatan,
+      updated_at: new Date().toISOString()
+    }], { onConflict: 'student_id,extracurricular_id' });
+
+    if (error) alert('Gagal: ' + error.message);
+    else alert('Nilai berhasil disimpan permanen!');
+  }
+
+  // 1. Download Daftar Siswa Per Ekstrakurikuler (CSV)
+  function downloadDaftarSiswaEkskulCSV() {
+    const ekskulSelect = document.getElementById('sel-ekskul-nilai');
+    const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
+    if (!ekskulSelect.value) return alert('Pilih Ekstrakurikuler terlebih dahulu!');
+
+    let csv = "Student_ID,NISN,Nama Lengkap,Kelas,Predikat,Catatan\n";
+    currentFilteredEkskulSiswa.forEach(s => {
+      if (s.students) {
+        const pred = document.getElementById(`pred-${s.students.id}`) ? document.getElementById(`pred-${s.students.id}`).value : 'B';
+        const cat = document.getElementById(`cat-${s.students.id}`) ? document.getElementById(`cat-${s.students.id}`).value : '';
+        csv += `"${s.students.id}","${s.students.nisn}","${s.students.nama_lengkap}","Kelas ${s.students.kelas}","${pred}","${cat}"\n`;
+      }
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Daftar_Siswa_${ekskulNama.replace(/\s+/g, '_')}.csv`;
+    link.click();
+  }
+
+  // 2. Download PDF Anggota Ekstrakurikuler
+  function downloadDaftarSiswaEkskulPDF() {
+    const ekskulSelect = document.getElementById('sel-ekskul-nilai');
+    const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
+    if (!ekskulSelect.value) return alert('Pilih Ekstrakurikuler terlebih dahulu!');
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text(`Daftar Anggota Ekstrakurikuler: ${ekskulNama}`, 14, 15);
+    doc.autoTable({ html: '#tbl-penilaian-container', startY: 25 });
+    doc.save(`Anggota_${ekskulNama.replace(/\s+/g, '_')}.pdf`);
+  }
+
+  // 3. Trigger File Input Upload
+  function triggerFileInput() {
+    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
+    if (!ekskulId) return alert('Pilih Ekstrakurikuler terlebih dahulu sebelum upload nilai!');
+    document.getElementById('file-upload-nilai').click();
+  }
+
+  // 4. Processing Upload File Nilai (CSV)
+  function uploadNilaiCSV(event) {
+    const file = event.target.files[0];
+    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      const text = e.target.result;
+      const lines = text.split('\n');
+      let successCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+
+        // Parsing format CSV: "Student_ID","NISN","Nama Lengkap","Kelas","Predikat","Catatan"
+        const parts = line.split(',').map(p => p.replace(/^"|"$/g, '').trim());
+        if (parts.length >= 5) {
+          const studentId = parts[0];
+          const predikat = parts[4] || 'B';
+          const catatan = parts[5] || '';
+
+          if (studentId) {
+            await db.from('grades').upsert([{
+              student_id: studentId,
+              extracurricular_id: ekskulId,
+              predikat: predikat,
+              catatan: catatan,
+              updated_at: new Date().toISOString()
+            }], { onConflict: 'student_id,extracurricular_id' });
+            successCount++;
+          }
+        }
+      }
+
+      alert(`Berhasil mengunggah dan memperbarui ${successCount} data nilai siswa!`);
+      loadSiswaByEkskul();
+    };
+    reader.readAsText(file);
   }
 
   function renderTableEkskul(list) {
