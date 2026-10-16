@@ -102,14 +102,34 @@
     </table>
   </div>
 
-  <!-- 3. Data Siswa & Pilihan -->
+  <!-- 3. Data Siswa & Pilihan (Opsi Pilihan Kelas 7 A-G dan 8 A-G Tambahan) -->
   <div id="p-siswa" class="panel">
     <h3>Data Siswa & Pilihan Ekstrakurikuler</h3>
     <div class="form-row">
       <select id="filter-kelas" onchange="renderTableSiswa(rawSelections)">
         <option value="">-- Semua Kelas --</option>
-        <option value="7">Kelas 7</option>
-        <option value="8">Kelas 8</option>
+        <optgroup label="Semua Tingkat">
+          <option value="7">Semua Kelas 7</option>
+          <option value="8">Semua Kelas 8</option>
+        </optgroup>
+        <optgroup label="Rincian Kelas 7">
+          <option value="7A">Kelas 7A</option>
+          <option value="7B">Kelas 7B</option>
+          <option value="7C">Kelas 7C</option>
+          <option value="7D">Kelas 7D</option>
+          <option value="7E">Kelas 7E</option>
+          <option value="7F">Kelas 7F</option>
+          <option value="7G">Kelas 7G</option>
+        </optgroup>
+        <optgroup label="Rincian Kelas 8">
+          <option value="8A">Kelas 8A</option>
+          <option value="8B">Kelas 8B</option>
+          <option value="8C">Kelas 8C</option>
+          <option value="8D">Kelas 8D</option>
+          <option value="8E">Kelas 8E</option>
+          <option value="8F">Kelas 8F</option>
+          <option value="8G">Kelas 8G</option>
+        </optgroup>
       </select>
       <button class="btn btn-success" onclick="exportDataCSV()">📥 Export Rekap (CSV)</button>
     </div>
@@ -161,7 +181,7 @@
     <div class="total-box" id="rab-total-display">Total RAB: Rp 0</div>
   </div>
 
-  <!-- 6. Penilaian Ekstrakurikuler (FITUR BARU DOWNLOAD & UPLOAD NILAI) -->
+  <!-- 6. Penilaian Ekstrakurikuler -->
   <div id="p-nilai" class="panel">
     <h3>Penilaian Ekstrakurikuler</h3>
     <div class="form-row">
@@ -170,7 +190,7 @@
       </select>
     </div>
 
-    <!-- Tombol Aksi Download & Upload khusus per Ekskul -->
+    <!-- Tombol Aksi Download & Upload -->
     <div class="action-group">
       <button class="btn btn-success" onclick="downloadDaftarSiswaEkskulCSV()">📥 Download Daftar Siswa (CSV)</button>
       <button class="btn btn-warning" onclick="downloadDaftarSiswaEkskulPDF()">📄 Download PDF Anggota</button>
@@ -216,7 +236,7 @@
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // INGAT PASTE ANON KEY SUPABASE MILIKMU DI SINI:
+  // PASTIKAN GANTI DENGAN ANON KEY SUPABASE ASLI MILIKMU:
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -276,7 +296,7 @@
     if (sData) {
       rawStudents = sData;
       document.getElementById('pres-student-id').innerHTML = '<option value="">-- Pilih Nama Peserta/Siswa --</option>' + 
-        sData.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.nisn})</option>`).join('');
+        sData.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.nisn}) - ${s.kelas}</option>`).join('');
     }
 
     const { data: selData } = await db.from('selections').select(`
@@ -290,12 +310,45 @@
     if (selData) {
       rawSelections = selData;
       document.getElementById('cnt-siswa').innerText = selData.length;
-      document.getElementById('cnt-k7').innerText = selData.filter(s => s.students && s.students.kelas == 7).length;
-      document.getElementById('cnt-k8').innerText = selData.filter(s => s.students && s.students.kelas == 8).length;
+      document.getElementById('cnt-k7').innerText = selData.filter(s => s.students && String(s.students.kelas).startsWith('7')).length;
+      document.getElementById('cnt-k8').innerText = selData.filter(s => s.students && String(s.students.kelas).startsWith('8')).length;
       renderTableSiswa(selData);
     }
 
     loadPrestasi();
+  }
+
+  // --- LOGIKA PENYARINGAN KELAS FLEKSIBEL (SUPPORT 7, 8, MAUPUN 7A-7G, 8A-8G) ---
+  function renderTableSiswa(list) {
+    const filterVal = document.getElementById('filter-kelas').value.toUpperCase().trim();
+    let filtered = list;
+
+    if (filterVal) {
+      filtered = list.filter(s => {
+        if (!s.students || !s.students.kelas) return false;
+        const kSiswa = String(s.students.kelas).toUpperCase().trim();
+
+        // Jika filter yang dipilih adalah '7' atau '8' saja
+        if (filterVal === '7' || filterVal === '8') {
+          return kSiswa.startsWith(filterVal);
+        }
+        // Jika filter yang dipilih adalah spesifik '7A', '7B', dst.
+        return kSiswa === filterVal || kSiswa === `KELAS ${filterVal}`;
+      });
+    }
+
+    document.getElementById('tbl-siswa').innerHTML = filtered.map((item, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>${item.students ? item.students.nisn : '-'}</td>
+        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
+        <td>${item.students ? (String(item.students.kelas).startsWith('Kelas') ? item.students.kelas : 'Kelas ' + item.students.kelas) : '-'}</td>
+        <td>${item.e1 ? item.e1.nama : '-'}</td>
+        <td>${item.e2 ? item.e2.nama : '-'}</td>
+        <td>${item.e3 ? item.e3.nama : '-'}</td>
+        <td><button class="btn btn-danger" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button></td>
+      </tr>
+    `).join('');
   }
 
   // --- LOGIKA PENILAIAN, DOWNLOAD DAFTAR SISWA, & UPLOAD NILAI ---
@@ -309,10 +362,14 @@
       return;
     }
 
-    const { data: existingGrades } = await db.from('grades').select('*').eq('extracurricular_id', ekskulId);
+    const { data: existingGrades, error } = await db.from('grades').select('*').eq('extracurricular_id', ekskulId);
+    if (error) console.error('Gagal mengambil nilai:', error);
+
     const gradeMap = {};
     if (existingGrades) {
-      existingGrades.forEach(g => { gradeMap[g.student_id] = g; });
+      existingGrades.forEach(g => { 
+        if (g.student_id) gradeMap[g.student_id.trim()] = g; 
+      });
     }
 
     currentFilteredEkskulSiswa = rawSelections.filter(s => 
@@ -322,7 +379,7 @@
     );
 
     tbody.innerHTML = currentFilteredEkskulSiswa.map((item, idx) => {
-      const studentId = item.students ? item.students.id : '';
+      const studentId = item.students ? item.students.id.trim() : '';
       const savedGrade = gradeMap[studentId] || {};
       const predikatVal = savedGrade.predikat || 'B';
       const catatanVal = savedGrade.catatan || '';
@@ -332,7 +389,7 @@
           <td>${idx + 1}</td>
           <td>${item.students ? item.students.nisn : '-'}</td>
           <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-          <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
+          <td>${item.students ? (String(item.students.kelas).startsWith('Kelas') ? item.students.kelas : 'Kelas ' + item.students.kelas) : '-'}</td>
           <td>
             <select id="pred-${studentId}" style="width:70px">
               <option value="A" ${predikatVal === 'A' ? 'selected' : ''}>A</option>
@@ -365,29 +422,27 @@
     else alert('Nilai berhasil disimpan permanen!');
   }
 
-  // 1. Download Daftar Siswa Per Ekstrakurikuler (CSV)
   function downloadDaftarSiswaEkskulCSV() {
     const ekskulSelect = document.getElementById('sel-ekskul-nilai');
     const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
     if (!ekskulSelect.value) return alert('Pilih Ekstrakurikuler terlebih dahulu!');
 
-    let csv = "Student_ID,NISN,Nama Lengkap,Kelas,Predikat,Catatan\n";
+    let csv = "Student_ID;NISN;Nama Lengkap;Kelas;Predikat;Catatan\n";
     currentFilteredEkskulSiswa.forEach(s => {
       if (s.students) {
         const pred = document.getElementById(`pred-${s.students.id}`) ? document.getElementById(`pred-${s.students.id}`).value : 'B';
         const cat = document.getElementById(`cat-${s.students.id}`) ? document.getElementById(`cat-${s.students.id}`).value : '';
-        csv += `"${s.students.id}","${s.students.nisn}","${s.students.nama_lengkap}","Kelas ${s.students.kelas}","${pred}","${cat}"\n`;
+        csv += `"${s.students.id}";"${s.students.nisn}";"${s.students.nama_lengkap}";"${s.students.kelas}";"${pred}";"${cat}"\n`;
       }
     });
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `Daftar_Siswa_${ekskulNama.replace(/\s+/g, '_')}.csv`;
     link.click();
   }
 
-  // 2. Download PDF Anggota Ekstrakurikuler
   function downloadDaftarSiswaEkskulPDF() {
     const ekskulSelect = document.getElementById('sel-ekskul-nilai');
     const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
@@ -400,14 +455,12 @@
     doc.save(`Anggota_${ekskulNama.replace(/\s+/g, '_')}.pdf`);
   }
 
-  // 3. Trigger File Input Upload
   function triggerFileInput() {
     const ekskulId = document.getElementById('sel-ekskul-nilai').value;
     if (!ekskulId) return alert('Pilih Ekstrakurikuler terlebih dahulu sebelum upload nilai!');
     document.getElementById('file-upload-nilai').click();
   }
 
-  // 4. Processing Upload File Nilai (CSV)
   function uploadNilaiCSV(event) {
     const file = event.target.files[0];
     const ekskulId = document.getElementById('sel-ekskul-nilai').value;
@@ -416,35 +469,44 @@
     const reader = new FileReader();
     reader.onload = async function(e) {
       const text = e.target.result;
-      const lines = text.split('\n');
+      const cleanText = text.replace(/^\uFEFF/, '');
+      const lines = cleanText.split(/\r\n|\n|\r/);
       let successCount = 0;
 
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
 
-        // Parsing format CSV: "Student_ID","NISN","Nama Lengkap","Kelas","Predikat","Catatan"
-        const parts = line.split(',').map(p => p.replace(/^"|"$/g, '').trim());
-        if (parts.length >= 5) {
-          const studentId = parts[0];
-          const predikat = parts[4] || 'B';
-          const catatan = parts[5] || '';
+        const delimiter = line.includes(';') ? ';' : ',';
+        const parts = line.split(delimiter).map(p => p.trim().replace(/^"|"$/g, ''));
 
-          if (studentId) {
-            await db.from('grades').upsert([{
+        if (parts.length >= 5) {
+          const studentId = parts[0].trim();
+          const predikat = (parts[4] || 'B').trim().toUpperCase();
+          const catatan = parts[5] ? parts[5].trim() : '';
+
+          if (studentId && studentId.toLowerCase() !== 'student_id' && studentId.length > 20) {
+            const { error } = await db.from('grades').upsert([{
               student_id: studentId,
               extracurricular_id: ekskulId,
               predikat: predikat,
               catatan: catatan,
               updated_at: new Date().toISOString()
             }], { onConflict: 'student_id,extracurricular_id' });
-            successCount++;
+
+            if (!error) successCount++;
           }
         }
       }
 
-      alert(`Berhasil mengunggah dan memperbarui ${successCount} data nilai siswa!`);
-      loadSiswaByEkskul();
+      event.target.value = '';
+
+      if (successCount > 0) {
+        alert(`Berhasil mengunggah dan menyimpan ${successCount} nilai siswa ke database!`);
+        await loadSiswaByEkskul();
+      } else {
+        alert('Gagal memproses file. Pastikan file CSV diunduh langsung dari tombol "Download Daftar Siswa (CSV)"!');
+      }
     };
     reader.readAsText(file);
   }
@@ -455,24 +517,6 @@
         <td>${idx + 1}</td>
         <td><strong>${item.nama}</strong></td>
         <td><button class="btn btn-danger" onclick="deleteEkskul('${item.id}')">Hapus</button></td>
-      </tr>
-    `).join('');
-  }
-
-  function renderTableSiswa(list) {
-    const filterKelas = document.getElementById('filter-kelas').value;
-    let filtered = filterKelas ? list.filter(s => s.students && s.students.kelas == filterKelas) : list;
-
-    document.getElementById('tbl-siswa').innerHTML = filtered.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${item.students ? item.students.nisn : '-'}</td>
-        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-        <td>Kelas ${item.students ? item.students.kelas : '-'}</td>
-        <td>${item.e1 ? item.e1.nama : '-'}</td>
-        <td>${item.e2 ? item.e2.nama : '-'}</td>
-        <td>${item.e3 ? item.e3.nama : '-'}</td>
-        <td><button class="btn btn-danger" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button></td>
       </tr>
     `).join('');
   }
@@ -616,14 +660,14 @@
   }
 
   function exportDataCSV() {
-    let csv = "NISN,Nama Lengkap,Kelas,Pilihan 1,Pilihan 2,Pilihan 3\n";
+    let csv = "NISN;Nama Lengkap;Kelas;Pilihan 1;Pilihan 2;Pilihan 3\n";
     rawSelections.forEach(s => {
       if (s.students) {
-        csv += `"${s.students.nisn}","${s.students.nama_lengkap}","Kelas ${s.students.kelas}","${s.e1 ? s.e1.nama : '-'}","${s.e2 ? s.e2.nama : '-'}","${s.e3 ? s.e3.nama : '-'}"\n`;
+        csv += `"${s.students.nisn}";"${s.students.nama_lengkap}";"${s.students.kelas}";"${s.e1 ? s.e1.nama : '-'}";"${s.e2 ? s.e2.nama : '-'}";"${s.e3 ? s.e3.nama : '-'}"\n`;
       }
     });
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'Rekap_Pendaftaran_Ekskul.csv';
@@ -639,12 +683,12 @@
   }
 
   function exportRABCSV() {
-    let csv = "No,Kebutuhan,Jumlah Barang,Harga Satuan,Lama Kegiatan,Total Jumlah\n";
+    let csv = "No;Kebutuhan;Jumlah Barang;Harga Satuan;Lama Kegiatan;Total Jumlah\n";
     rabItems.forEach((item, idx) => {
       const subtotal = item.jumlah * item.harga * item.lama;
-      csv += `"${idx+1}","${item.kebutuhan}","${item.jumlah}","${item.harga}","${item.lama}","${subtotal}"\n`;
+      csv += `"${idx+1}";"${item.kebutuhan}";"${item.jumlah}";"${item.harga}";"${item.lama}";"${subtotal}"\n`;
     });
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'RAB_Lomba.csv';
