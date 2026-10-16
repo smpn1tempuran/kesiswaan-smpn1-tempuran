@@ -158,48 +158,42 @@
   }
 
   function handleKelasChange() {
-    const kelas = document.getElementById('kelas').value;
-    const groupDp = document.getElementById('group-dp');
-    const isDp = document.getElementById('is_dp').value;
+  const kelas = document.getElementById('kelas').value;
+  const groupDp = document.getElementById('group-dp');
+  const isDp = document.getElementById('is_dp').value;
 
-    if (kelas === '8') {
-      groupDp.style.display = 'block';
-    } else {
-      groupDp.style.display = 'none';
-      document.getElementById('is_dp').value = 'tidak';
+  // Cek apakah siswa Kelas 8 (misal: 8, 8A, 8B, dst)
+  if (kelas.startsWith('8')) {
+    groupDp.style.display = 'block';
+  } else {
+    groupDp.style.display = 'none';
+    document.getElementById('is_dp').value = 'tidak';
+  }
+
+  const ekskul1Select = document.getElementById('ekskul1');
+  const groupEkskul3 = document.getElementById('group-ekskul3');
+  const infoRules = document.getElementById('info-rules');
+
+  // Cek jika Kelas 7 (7A-7G) ATAU Kelas 8 Dewan Penggalang (DP)
+  if (kelas.startsWith('7') || (kelas.startsWith('8') && isDp === 'ya')) {
+    // Wajib Pramuka + 2 Ekskul Pilihan (Total 3)
+    if (pramukaId) {
+      ekskul1Select.value = pramukaId;
+      ekskul1Select.disabled = true;
     }
-
-    const ekskul1Select = document.getElementById('ekskul1');
-    const groupEkskul3 = document.getElementById('group-ekskul3');
-    const infoRules = document.getElementById('info-rules');
-
-    if (kelas === '7' || (kelas === '8' && isDp === 'ya')) {
-      // Wajib Pramuka + 2 Ekskul Pilihan (Total 3)
-      if (pramukaId) {
-        ekskul1Select.value = pramukaId;
-        ekskul1Select.disabled = true;
-      }
-      groupEkskul3.style.display = 'block';
-      document.getElementById('lbl-ekskul1').innerText = 'Pilihan Utama (Wajib Pramuka)';
-      document.getElementById('lbl-ekskul2').innerText = 'Pilihan Ekskul 2';
-      document.getElementById('lbl-ekskul3').innerText = 'Pilihan Ekskul 3';
-
-      infoRules.innerHTML = kelas === '7' 
-        ? '📌 <strong>Kelas 7:</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.'
-        : '📌 <strong>Dewan Penggalang (Kelas 8):</strong> Wajib Pramuka + memilih 2 ekstrakurikuler pilihan.';
-    } else {
-      // Kelas 8 BUKAN Dewan Penggalang -> HANYA Memilih 2 Ekskul Pilihan
-      ekskul1Select.disabled = false;
-      ekskul1Select.value = '';
-      groupEkskul3.style.display = 'none';
-      document.getElementById('ekskul3').value = '';
-      
-      document.getElementById('lbl-ekskul1').innerText = 'Pilihan Ekskul 1';
-      document.getElementById('lbl-ekskul2').innerText = 'Pilihan Ekskul 2';
-
-      infoRules.innerHTML = '📌 <strong>Kelas 8 (Bukan Dewan Penggalang):</strong> Silakan memilih 2 ekstrakurikuler pilihan.';
+    if (groupEkskul3) groupEkskul3.style.display = 'block';
+    if (infoRules) {
+      infoRules.innerText = 'Kelas 7 & Anggota Dewan Penggalang (DP) Wajib Pramuka + memilih 2 Ekskul Pilihan tambahan.';
+    }
+  } else {
+    // Kelas 8 Non-DP (Bebas memilih 2 ekskul)
+    ekskul1Select.disabled = false;
+    if (groupEkskul3) groupEkskul3.style.display = 'none';
+    if (infoRules) {
+      infoRules.innerText = 'Kelas 8 dapat memilih maksimal 2 Ekskul Pilihan.';
     }
   }
+}
 
   function validateStep1() {
     const nisn = document.getElementById('nisn').value.trim();
