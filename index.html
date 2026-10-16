@@ -51,13 +51,29 @@
         <input type="text" id="nama" required placeholder="Masukkan Nama Lengkap">
       </div>
       <div class="form-group">
-        <label for="kelas">Kelas</label>
-        <select id="kelas" required onchange="handleKelasChange()">
-          <option value="">-- Pilih Kelas --</option>
-          <option value="7">Kelas 7</option>
-          <option value="8">Kelas 8</option>
-        </select>
-      </div>
+  <label for="kelas">Kelas</label>
+  <select id="kelas" required onchange="handleKelasChange()">
+    <option value="">-- Pilih Kelas --</option>
+    <optgroup label="Kelas 7">
+      <option value="7A">Kelas 7A</option>
+      <option value="7B">Kelas 7B</option>
+      <option value="7C">Kelas 7C</option>
+      <option value="7D">Kelas 7D</option>
+      <option value="7E">Kelas 7E</option>
+      <option value="7F">Kelas 7F</option>
+      <option value="7G">Kelas 7G</option>
+    </optgroup>
+    <optgroup label="Kelas 8">
+      <option value="8A">Kelas 8A</option>
+      <option value="8B">Kelas 8B</option>
+      <option value="8C">Kelas 8C</option>
+      <option value="8D">Kelas 8D</option>
+      <option value="8E">Kelas 8E</option>
+      <option value="8F">Kelas 8F</option>
+      <option value="8G">Kelas 8G</option>
+    </optgroup>
+  </select>
+</div>
 
       <!-- Opsi Dewan Penggalang untuk Kelas 8 -->
       <div class="form-group" id="group-dp" style="display: none;">
