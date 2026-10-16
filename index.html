@@ -51,29 +51,29 @@
         <input type="text" id="nama" required placeholder="Masukkan Nama Lengkap">
       </div>
       <div class="form-group">
-  <label for="kelas">Kelas</label>
-  <select id="kelas" required onchange="handleKelasChange()">
-    <option value="">-- Pilih Kelas --</option>
-    <optgroup label="Kelas 7">
-      <option value="7A">Kelas 7A</option>
-      <option value="7B">Kelas 7B</option>
-      <option value="7C">Kelas 7C</option>
-      <option value="7D">Kelas 7D</option>
-      <option value="7E">Kelas 7E</option>
-      <option value="7F">Kelas 7F</option>
-      <option value="7G">Kelas 7G</option>
-    </optgroup>
-    <optgroup label="Kelas 8">
-      <option value="8A">Kelas 8A</option>
-      <option value="8B">Kelas 8B</option>
-      <option value="8C">Kelas 8C</option>
-      <option value="8D">Kelas 8D</option>
-      <option value="8E">Kelas 8E</option>
-      <option value="8F">Kelas 8F</option>
-      <option value="8G">Kelas 8G</option>
-    </optgroup>
-  </select>
-</div>
+        <label for="kelas">Kelas</label>
+        <select id="kelas" required onchange="handleKelasChange()">
+          <option value="">-- Pilih Kelas --</option>
+          <optgroup label="Kelas 7">
+            <option value="7A">Kelas 7A</option>
+            <option value="7B">Kelas 7B</option>
+            <option value="7C">Kelas 7C</option>
+            <option value="7D">Kelas 7D</option>
+            <option value="7E">Kelas 7E</option>
+            <option value="7F">Kelas 7F</option>
+            <option value="7G">Kelas 7G</option>
+          </optgroup>
+          <optgroup label="Kelas 8">
+            <option value="8A">Kelas 8A</option>
+            <option value="8B">Kelas 8B</option>
+            <option value="8C">Kelas 8C</option>
+            <option value="8D">Kelas 8D</option>
+            <option value="8E">Kelas 8E</option>
+            <option value="8F">Kelas 8F</option>
+            <option value="8G">Kelas 8G</option>
+          </optgroup>
+        </select>
+      </div>
 
       <!-- Opsi Dewan Penggalang untuk Kelas 8 -->
       <div class="form-group" id="group-dp" style="display: none;">
@@ -132,7 +132,6 @@
 
 <script>
   const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // PASTIKAN PASTE ANON KEY SUPABASE KAMU DI SINI:
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -158,42 +157,41 @@
   }
 
   function handleKelasChange() {
-  const kelas = document.getElementById('kelas').value;
-  const groupDp = document.getElementById('group-dp');
-  const isDp = document.getElementById('is_dp').value;
+    const kelas = document.getElementById('kelas').value;
+    const groupDp = document.getElementById('group-dp');
+    const isDp = document.getElementById('is_dp').value;
 
-  // Cek apakah siswa Kelas 8 (misal: 8, 8A, 8B, dst)
-  if (kelas.startsWith('8')) {
-    groupDp.style.display = 'block';
-  } else {
-    groupDp.style.display = 'none';
-    document.getElementById('is_dp').value = 'tidak';
+    // Cek apakah siswa Kelas 8 (8A, 8B, dst)
+    if (kelas.startsWith('8')) {
+      groupDp.style.display = 'block';
+    } else {
+      groupDp.style.display = 'none';
+      document.getElementById('is_dp').value = 'tidak';
+    }
+
+    const ekskul1Select = document.getElementById('ekskul1');
+    const groupEkskul3 = document.getElementById('group-ekskul3');
+    const infoRules = document.getElementById('info-rules');
+
+    // Jika Kelas 7 (7A-7G) ATAU Kelas 8 Dewan Penggalang (DP)
+    if (kelas.startsWith('7') || (kelas.startsWith('8') && isDp === 'ya')) {
+      if (pramukaId) {
+        ekskul1Select.value = pramukaId;
+        ekskul1Select.disabled = true; // Wajib Pramuka
+      }
+      if (groupEkskul3) groupEkskul3.style.display = 'block';
+      if (infoRules) {
+        infoRules.innerText = 'Kelas 7 & Anggota Dewan Penggalang (DP) Wajib Pramuka + memilih 2 Ekskul Pilihan tambahan.';
+      }
+    } else {
+      // Kelas 8 Non-DP
+      ekskul1Select.disabled = false;
+      if (groupEkskul3) groupEkskul3.style.display = 'none';
+      if (infoRules) {
+        infoRules.innerText = 'Kelas 8 dapat memilih maksimal 2 Ekskul Pilihan.';
+      }
+    }
   }
-
-  const ekskul1Select = document.getElementById('ekskul1');
-  const groupEkskul3 = document.getElementById('group-ekskul3');
-  const infoRules = document.getElementById('info-rules');
-
-  // Cek jika Kelas 7 (7A-7G) ATAU Kelas 8 Dewan Penggalang (DP)
-  if (kelas.startsWith('7') || (kelas.startsWith('8') && isDp === 'ya')) {
-    // Wajib Pramuka + 2 Ekskul Pilihan (Total 3)
-    if (pramukaId) {
-      ekskul1Select.value = pramukaId;
-      ekskul1Select.disabled = true;
-    }
-    if (groupEkskul3) groupEkskul3.style.display = 'block';
-    if (infoRules) {
-      infoRules.innerText = 'Kelas 7 & Anggota Dewan Penggalang (DP) Wajib Pramuka + memilih 2 Ekskul Pilihan tambahan.';
-    }
-  } else {
-    // Kelas 8 Non-DP (Bebas memilih 2 ekskul)
-    ekskul1Select.disabled = false;
-    if (groupEkskul3) groupEkskul3.style.display = 'none';
-    if (infoRules) {
-      infoRules.innerText = 'Kelas 8 dapat memilih maksimal 2 Ekskul Pilihan.';
-    }
-  }
-}
 
   function validateStep1() {
     const nisn = document.getElementById('nisn').value.trim();
@@ -231,7 +229,7 @@
 
     const kelas = document.getElementById('kelas').value;
     const isDp = document.getElementById('is_dp').value;
-    const showE3 = (kelas === '7' || (kelas === '8' && isDp === 'ya'));
+    const showE3 = (kelas.startsWith('7') || (kelas.startsWith('8') && isDp === 'ya'));
 
     let summaryHtml = `
       <strong>Konfirmasi Data Pendaftaran:</strong><br><br>
@@ -258,7 +256,7 @@
 
     const nisn = document.getElementById('nisn').value.trim();
     const nama = document.getElementById('nama').value.trim();
-    const kelas = parseInt(document.getElementById('kelas').value);
+    const kelas = document.getElementById('kelas').value.trim(); // Simpan string "7A", "8B", dst.
     const isDp = document.getElementById('is_dp').value;
 
     // 1. Simpan/Update Siswa
@@ -274,7 +272,7 @@
     let e3 = document.getElementById('ekskul3').value || null;
 
     // Jika Kelas 8 Bukan Dewan Penggalang, paksa e3 menjadi null
-    if (kelas === 8 && isDp === 'tidak') {
+    if (kelas.startsWith('8') && isDp === 'tidak') {
       e3 = null;
     }
 
