@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Admin - Ekstrakurikuler</title>
   
-  <!-- Bootstrap CSS & JS -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
   <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- jsPDF & AutoTable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-</head>
   
   <style>
     body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -382,108 +379,100 @@
     }
   }
 
-  // --- FUNGSI MODAL EDIT (DINAMIS & TERPOP-UP AMAN) ---
-async function openEditModal(item) {
-  let dataItem = item;
-  if (typeof item === 'string') {
-    try { dataItem = JSON.parse(item); } catch(e) {}
-  }
+  // --- FUNGSI MODAL EDIT (DINAMIS & TERPOP-UP) ---
+  async function openEditModal(item) {
+    let dataItem = item;
+    if (typeof item === 'string') {
+      try { dataItem = JSON.parse(item); } catch(e) {}
+    }
 
-  const student = dataItem.students || dataItem;
-  document.getElementById('edit_student_id').value = student.id || dataItem.student_id || '';
-  document.getElementById('edit_selection_id').value = dataItem.id || '';
-  document.getElementById('edit_nisn').value = student.nisn || '';
-  document.getElementById('edit_nama').value = student.nama_lengkap || student.nama || '';
-  document.getElementById('edit_kelas').value = student.kelas || '';
+    const student = dataItem.students || dataItem;
+    document.getElementById('edit_student_id').value = student.id || dataItem.student_id || '';
+    document.getElementById('edit_selection_id').value = dataItem.id || '';
+    document.getElementById('edit_nisn').value = student.nisn || '';
+    document.getElementById('edit_nama').value = student.nama_lengkap || student.nama || '';
+    document.getElementById('edit_kelas').value = student.kelas || '';
 
-  // Ambil opsi ekskul dari Supabase jika belum ter-load
-  let list = ekskulList;
-  if (!list || list.length === 0) {
-    const { data: ekskulData } = await db.from('extracurriculars').select('*');
-    if (ekskulData) list = ekskulData;
-  }
+    // Ambil opsi ekskul dari Supabase jika belum ter-load
+    let list = ekskulList;
+    if (!list || list.length === 0) {
+      const { data: ekskulData } = await db.from('extracurriculars').select('*');
+      if (ekskulData) list = ekskulData;
+    }
 
-  let optionsHtml = '<option value="">-- Tidak Memilih --</option>';
-  if (list && list.length > 0) {
+    let optionsHtml = '<option value="">-- Tidak Memilih --</option>';
     list.forEach(e => {
       const namaEkskul = e.name || e.nama || e.nama_ekskul || ('Ekskul ' + e.id);
       optionsHtml += `<option value="${e.id}">${namaEkskul}</option>`;
     });
-  }
 
-  const sel1 = document.getElementById('edit_ekskul1');
-  const sel2 = document.getElementById('edit_ekskul2');
-  const sel3 = document.getElementById('edit_ekskul3');
+    const sel1 = document.getElementById('edit_ekskul1');
+    const sel2 = document.getElementById('edit_ekskul2');
+    const sel3 = document.getElementById('edit_ekskul3');
 
-  sel1.innerHTML = optionsHtml;
-  sel2.innerHTML = optionsHtml;
-  sel3.innerHTML = optionsHtml;
+    sel1.innerHTML = optionsHtml;
+    sel2.innerHTML = optionsHtml;
+    sel3.innerHTML = optionsHtml;
 
-  sel1.value = dataItem.extracurricular_1_id || '';
-  sel2.value = dataItem.extracurricular_2_id || '';
-  sel3.value = dataItem.extracurricular_3_id || '';
+    sel1.value = dataItem.extracurricular_1_id || '';
+    sel2.value = dataItem.extracurricular_2_id || '';
+    sel3.value = dataItem.extracurricular_3_id || '';
 
-  // Panggil Bootstrap Modal secara aman
-  const modalEl = document.getElementById('editStudentModal');
-  const bsLib = window.bootstrap;
-  if (bsLib && bsLib.Modal) {
-    const modal = bsLib.Modal.getOrCreateInstance(modalEl);
+    // Pop up modal Bootstrap di tengah layar
+    const modalEl = document.getElementById('editStudentModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     modal.show();
   }
-}
 
-// Save Perubahan Data Siswa & Pilihan Ekskul ke Database
-async function saveStudentEdit() {
-  const studentId = document.getElementById('edit_student_id').value;
-  const selectionId = document.getElementById('edit_selection_id').value;
+  // Save Perubahan Data Siswa & Pilihan Ekskul ke Database
+  async function saveStudentEdit() {
+    const studentId = document.getElementById('edit_student_id').value;
+    const selectionId = document.getElementById('edit_selection_id').value;
 
-  const newNisn = document.getElementById('edit_nisn').value;
-  const newNama = document.getElementById('edit_nama').value;
-  const newKelas = document.getElementById('edit_kelas').value;
+    const newNisn = document.getElementById('edit_nisn').value;
+    const newNama = document.getElementById('edit_nama').value;
+    const newKelas = document.getElementById('edit_kelas').value;
 
-  const newE1 = document.getElementById('edit_ekskul1').value || null;
-  const newE2 = document.getElementById('edit_ekskul2').value || null;
-  const newE3 = document.getElementById('edit_ekskul3').value || null;
+    const newE1 = document.getElementById('edit_ekskul1').value || null;
+    const newE2 = document.getElementById('edit_ekskul2').value || null;
+    const newE3 = document.getElementById('edit_ekskul3').value || null;
 
-  try {
-    if (studentId) {
-      const { error: errStudent } = await db
-        .from('students')
-        .update({ nisn: newNisn, nama_lengkap: newNama, kelas: newKelas })
-        .eq('id', studentId);
+    try {
+      if (studentId) {
+        const { error: errStudent } = await db
+          .from('students')
+          .update({ nisn: newNisn, nama_lengkap: newNama, kelas: newKelas })
+          .eq('id', studentId);
 
-      if (errStudent) throw errStudent;
-    }
+        if (errStudent) throw errStudent;
+      }
 
-    if (selectionId) {
-      const { error: errSelection } = await db
-        .from('selections')
-        .update({
-          extracurricular_1_id: newE1,
-          extracurricular_2_id: newE2,
-          extracurricular_3_id: newE3
-        })
-        .eq('id', selectionId);
+      if (selectionId) {
+        const { error: errSelection } = await db
+          .from('selections')
+          .update({
+            extracurricular_1_id: newE1,
+            extracurricular_2_id: newE2,
+            extracurricular_3_id: newE3
+          })
+          .eq('id', selectionId);
 
-      if (errSelection) throw errSelection;
-    }
+        if (errSelection) throw errSelection;
+      }
 
-    alert('Data siswa dan pilihan ekstrakurikuler berhasil diperbarui!');
-    
-    // Tutup Modal secara aman
-    const modalEl = document.getElementById('editStudentModal');
-    const bsLib = window.bootstrap;
-    if (bsLib && bsLib.Modal) {
-      const modal = bsLib.Modal.getInstance(modalEl);
+      alert('Data siswa dan pilihan ekstrakurikuler berhasil diperbarui!');
+      
+      const modalEl = document.getElementById('editStudentModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
       if (modal) modal.hide();
+
+      loadDashboardData();
+
+    } catch (err) {
+      alert('Gagal mengedit data: ' + err.message);
     }
-
-    loadDashboardData();
-
-  } catch (err) {
-    alert('Gagal mengedit data: ' + err.message);
   }
-}
+
   // Delete Selection & Student
   async function deleteSelection(selectionId, studentId) {
     if (confirm('Yakin ingin menghapus data siswa beserta pilihannya?')) {
