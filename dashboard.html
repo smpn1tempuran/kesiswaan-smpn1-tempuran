@@ -661,8 +661,8 @@
       loadDashboardData();
     }
   }
-// Fungsi Buka Modal Edit, Isi Data Siswa & Opsi Pilihan Ekskul
-function openEditModal(item) {
+// Fungsi Buka Modal Edit
+async function openEditModal(item) {
   const student = item.students || {};
   document.getElementById('edit_student_id').value = student.id || '';
   document.getElementById('edit_selection_id').value = item.id || '';
@@ -670,9 +670,16 @@ function openEditModal(item) {
   document.getElementById('edit_nama').value = student.nama_lengkap || '';
   document.getElementById('edit_kelas').value = student.kelas || '';
 
-  // Buat daftar dropdown ekstrakurikuler dinamis dari ekskulList
+  // Ambil otomatis dari Supabase jika ekskulList belum terisi
+  let list = (typeof ekskulList !== 'undefined' && ekskulList.length > 0) ? ekskulList : [];
+  if (list.length === 0) {
+    const { data } = await db.from('extracurriculars').select('*').order('name');
+    if (data) list = data;
+  }
+
+  // Buat daftar opsi dropdown ekskul
   const optionsHtml = '<option value="">-- Tidak Memilih --</option>' + 
-    ekskulList.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+    list.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
 
   const sel1 = document.getElementById('edit_ekskul1');
   const sel2 = document.getElementById('edit_ekskul2');
@@ -682,16 +689,18 @@ function openEditModal(item) {
   sel2.innerHTML = optionsHtml;
   sel3.innerHTML = optionsHtml;
 
-  // Set nilai terpilih sesuai pilihan awal siswa
+  // Set nilai pilihan ekskul siswa saat ini
   sel1.value = item.extracurricular_1_id || '';
   sel2.value = item.extracurricular_2_id || '';
   sel3.value = item.extracurricular_3_id || '';
 
-  const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+  // Tampilkan Modal
+  const modalEl = document.getElementById('editStudentModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
   modal.show();
 }
 
-// Fungsi Simpan Perubahan ke Supabase (Tabel students & selections)
+// Fungsi Simpan Perubahan ke Supabase
 async function saveStudentEdit() {
   const studentId = document.getElementById('edit_student_id').value;
   const selectionId = document.getElementById('edit_selection_id').value;
@@ -705,7 +714,7 @@ async function saveStudentEdit() {
   const newE3 = document.getElementById('edit_ekskul3').value || null;
 
   try {
-    // 1. Update identitas siswa di tabel 'students'
+    // 1. Update data siswa
     if (studentId) {
       const { error: errStudent } = await db
         .from('students')
@@ -719,7 +728,7 @@ async function saveStudentEdit() {
       if (errStudent) throw errStudent;
     }
 
-    // 2. Update pilihan ekskul di tabel 'selections'
+    // 2. Update pilihan ekskul
     if (selectionId) {
       const { error: errSelection } = await db
         .from('selections')
@@ -735,12 +744,12 @@ async function saveStudentEdit() {
 
     alert('Data siswa dan pilihan ekstrakurikuler berhasil diperbarui!');
     
-    // Tutup Modal & Refresh Tabel Rekap
+    // Tutup Modal & Refresh Tabel
     const modalEl = document.getElementById('editStudentModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
-    modal.hide();
+    if (modal) modal.hide();
 
-    loadDashboardData(); // Refresh tampilan data
+    loadDashboardData();
 
   } catch (err) {
     alert('Gagal mengedit data: ' + err.message);
@@ -799,33 +808,33 @@ async function saveStudentEdit() {
   </script>
 
  <!-- Modal Edit Data Siswa & Pilihan Ekskul -->
-<div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Edit Data Siswa & Pilihan Ekskul</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="editModalLabel">Edit Data Siswa & Pilihan Ekskul</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body text-start">
         <form id="editStudentForm">
           <input type="hidden" id="edit_student_id">
           <input type="hidden" id="edit_selection_id">
           
           <div class="mb-3">
-            <label class="form-label">NISN</label>
+            <label class="form-label fw-bold">NISN</label>
             <input type="text" class="form-control" id="edit_nisn" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Nama Lengkap</label>
+            <label class="form-label fw-bold">Nama Lengkap</label>
             <input type="text" class="form-control" id="edit_nama" required>
           </div>
           <div class="mb-3">
-            <label class="form-label">Kelas</label>
+            <label class="form-label fw-bold">Kelas</label>
             <input type="text" class="form-control" id="edit_kelas" placeholder="Contoh: Kelas 7G" required>
           </div>
 
-          <hr>
-          <h6>Pilihan Ekstrakurikuler</h6>
+          <hr class="my-3">
+          <h6 class="fw-bold text-primary">Pilihan Ekstrakurikuler</h6>
 
           <div class="mb-3">
             <label class="form-label">Pilihan 1</label>
