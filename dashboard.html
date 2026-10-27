@@ -3,817 +3,220 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Kesiswaan - SMPN 1 Tempuran</title>
+  <title>Dashboard Admin - Ekstrakurikuler</title>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- jsPDF & AutoTable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f8fafc; display: flex; height: 100vh; color: #334155; }
-    
-    .sidebar { width: 260px; background: #1e293b; color: #fff; padding: 20px 10px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-    .sidebar h3 { font-size: 16px; text-align: center; color: #38bdf8; margin-bottom: 25px; margin-top: 5px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-    .nav-btn { background: none; border: none; color: #cbd5e1; width: 100%; text-align: left; padding: 12px 15px; font-size: 14px; cursor: pointer; border-radius: 6px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
-    .nav-btn:hover, .nav-btn.active { background: #2563eb; color: #fff; font-weight: 600; }
-    
-    .main-content { flex: 1; padding: 25px; overflow-y: auto; background-color: #f8fafc; }
-    
-    .header-bar { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 16px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 25px; font-size: 15px; }
-    .header-status { color: #334155; font-size: 15px; }
-    .header-status span.buka { color: #10b981; font-weight: bold; }
-    .header-status span.tutup { color: #ef4444; font-weight: bold; }
-
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
-    .card { background: #fff; padding: 20px; border-radius: 8px; border-left: 5px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card h4 { margin: 0 0 8px 0; font-size: 13px; color: #64748b; font-weight: 600; }
-    .card .val { font-size: 28px; font-weight: bold; color: #0f172a; }
-
-    .panel { background: #fff; padding: 22px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: none; }
-    .panel.active { display: block; }
-    .panel h3 { margin-top: 0; color: #1e293b; font-size: 18px; margin-bottom: 20px; }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-    th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
-    th { background: #f8fafc; color: #475569; font-weight: 600; }
-    
-    .btn { padding: 9px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-success { background: #10b981; color: #fff; }
-    .btn-warning { background: #f59e0b; color: #fff; }
-    .btn-danger { background: #ef4444; color: #fff; }
-    
-    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 15px; }
-    input, select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; outline: none; }
-    .total-box { margin-top: 18px; font-size: 16px; font-weight: bold; text-align: right; color: #1e3a8a; }
-    .action-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .sidebar { min-height: 100vh; background-color: #2c3e50; color: white; }
+    .sidebar .nav-link { color: #ecf0f1; margin-bottom: 5px; }
+    .sidebar .nav-link.active { background-color: #34495e; font-weight: bold; }
+    .card { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
   </style>
 </head>
 <body>
 
-<!-- Sidebar Navigasi -->
-<div class="sidebar">
-  <h3>SMPN 1 TEMPURAN</h3>
-  <button class="nav-btn active admin-menu" onclick="switchPanel(this, 'p-ringkasan')">📊 Ringkasan Data</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-ekskul')">🎯 Kelola Ekskul</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-siswa')">👥 Data Siswa & Pilihan</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-prestasi')">🏆 Prestasi Siswa</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-rab')">🤖 Rencana Lomba (RAB AI)</button>
-  <button class="nav-btn" id="btn-menu-nilai" onclick="switchPanel(this, 'p-nilai')">📝 Penilaian Ekskul</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-audit')">📜 Riwayat Perubahan</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-pengaturan')">⚙️ Pengaturan & User</button>
-  <button class="nav-btn admin-menu" onclick="switchPanel(this, 'p-backup')">💾 Backup Data</button>
+<div class="container-fluid">
+  <div class="row">
+    <!-- Sidebar -->
+    <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse p-3">
+      <h4 class="text-center my-3">Admin Panel</h4>
+      <hr>
+      <ul class="nav nav-pills flex-column mb-auto">
+        <li class="nav-item">
+          <a href="#" class="nav-link active" onclick="switchTab('rekap')">Data Siswa & Ekskul</a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" onclick="switchTab('ekskul')">Kelola Ekskul</a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" onclick="switchTab('prestasi')">Pencatatan Prestasi</a>
+        </li>
+        <li>
+          <a href="#" class="nav-link" onclick="switchTab('rab')">Rencana Biaya (RAB)</a>
+        </li>
+      </ul>
+      <hr>
+      <button class="btn btn-danger w-100" onclick="logout()">Keluar</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+      
+      <!-- Section 1: Rekapitulasi Data Siswa & Pilihan Ekskul -->
+      <div id="section-rekap">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>Data Rekapitulasi Pendaftaran</h2>
+          <div>
+            <button class="btn btn-success me-2" onclick="exportDataCSV()">Export CSV</button>
+          </div>
+        </div>
+        <div class="card p-3">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th>No</th>
+                  <th>NISN</th>
+                  <th>Nama Lengkap</th>
+                  <th>Kelas</th>
+                  <th>Pilihan 1</th>
+                  <th>Pilihan 2</th>
+                  <th>Pilihan 3</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-rekap-body">
+                <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Kelola Ekstrakurikuler -->
+      <div id="section-ekskul" style="display: none;">
+        <h2>Kelola Ekstrakurikuler</h2>
+        <div class="card p-4 mb-4">
+          <h5>Tambah Ekstrakurikuler Baru</h5>
+          <div class="input-group mb-3 style="max-width: 500px;"">
+            <input type="text" id="add-nama-ekskul" class="form-control" placeholder="Nama Ekstrakurikuler">
+            <button class="btn btn-primary" onclick="addEkskul()">Tambah</button>
+          </div>
+        </div>
+        <div class="card p-3">
+          <table class="table table-bordered align-middle">
+            <thead class="table-secondary">
+              <tr>
+                <th>No</th>
+                <th>Nama Ekstrakurikuler</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-ekskul-body">
+              <tr><td colspan="3" class="text-center">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 3: Pencatatan Prestasi -->
+      <div id="section-prestasi" style="display: none;">
+        <h2>Pencatatan Prestasi Siswa</h2>
+        <div class="card p-4 mb-4">
+          <h5>Tambah Prestasi Baru</h5>
+          <form id="form-prestasi" onsubmit="event.preventDefault(); savePrestasi();">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Pilih Siswa</label>
+                <select id="pres-student-id" class="form-select" required></select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Jenis Prestasi</label>
+                <input type="text" id="pres-jenis" class="form-control" placeholder="Contoh: Juara 1" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nama Lomba/Kejuaraan</label>
+                <input type="text" id="pres-nama" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Peringkat</label>
+                <input type="text" id="pres-peringkat" class="form-control" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tingkat</label>
+                <select id="pres-tingkat" class="form-select">
+                  <option value="Kabupaten/Kota">Kabupaten/Kota</option>
+                  <option value="Provinsi">Provinsi</option>
+                  <option value="Nasional">Nasional</option>
+                  <option value="Internasional">Internasional</option>
+                </select>
+              </div>
+              <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Simpan Prestasi</button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="card p-3">
+          <table class="table table-striped align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th>No</th>
+                <th>Nama Peserta</th>
+                <th>Jenis Prestasi</th>
+                <th>Nama Lomba</th>
+                <th>Peringkat</th>
+                <th>Tingkat</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-prestasi">
+              <tr><td colspan="7" class="text-center">Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section 4: RAB Lomba -->
+      <div id="section-rab" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h2>Rencana Biaya (RAB) Lomba</h2>
+          <div>
+            <button class="btn btn-outline-danger me-2" onclick="exportRABPDF()">Export PDF</button>
+            <button class="btn btn-outline-success" onclick="exportRABCSV()">Export CSV</button>
+          </div>
+        </div>
+        <div class="card p-4 mb-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nama Kejuaraan/Lomba</label>
+              <input type="text" id="rab-nama" class="form-control" placeholder="Nama Lomba">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Jumlah Peserta</label>
+              <input type="number" id="rab-peserta" class="form-control" value="1" min="1">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+              <button class="btn btn-primary w-100" onclick="generateRABTableAI()">Generate RAB</button>
+            </div>
+          </div>
+        </div>
+        <div class="card p-3">
+          <table class="table table-bordered align-middle" id="tbl-rab">
+            <thead class="table-secondary">
+              <tr>
+                <th>No</th>
+                <th>Kebutuhan</th>
+                <th>Jumlah</th>
+                <th>Harga Satuan</th>
+                <th>Lama Kegiatan (Hari)</th>
+                <th>Subtotal</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-success" onclick="addRABRow()">+ Tambah Baris</button>
+            <h5 id="rab-total-display" class="fw-bold">Total RAB: Rp 0</h5>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
 </div>
 
-<!-- Main Content Area -->
-<div class="main-content">
-  <!-- Header Bar -->
-  <div class="header-bar">
-    <div class="header-status">
-      <strong>Status Periode:</strong> <span id="lbl-status-periode" class="buka">BUKA</span> | <strong>Tahun Pelajaran:</strong> <span id="lbl-tapel">2026/2027</span>
-    </div>
-    <div style="display:flex; align-items:center; gap:15px;">
-      <span id="lbl-user-info" style="font-size:13px; color:#64748b;"></span>
-      <button class="btn btn-danger" onclick="logout()">Keluar</button>
-    </div>
-  </div>
-
-  <!-- 1. Ringkasan Data -->
-  <div id="p-ringkasan" class="panel active">
-    <h3>Ringkasan Pendaftaran</h3>
-    <div class="card-grid">
-      <div class="card"><h4>Total Siswa Mendaftar</h4><div class="val" id="cnt-siswa">0</div></div>
-      <div class="card" style="border-color:#10b981;"><h4>Siswa Kelas 7</h4><div class="val" id="cnt-k7">0</div></div>
-      <div class="card" style="border-color:#f59e0b;"><h4>Siswa Kelas 8</h4><div class="val" id="cnt-k8">0</div></div>
-      <div class="card" style="border-color:#8b5cf6;"><h4>Total Ekstrakurikuler</h4><div class="val" id="cnt-ekskul">0</div></div>
-    </div>
-    <button class="btn btn-success" onclick="exportDataCSV()">📥 Unduh Rekap CSV</button>
-  </div>
-
-  <!-- 2. Kelola Ekskul -->
-  <div id="p-ekskul" class="panel">
-    <h3>Kelola Daftar Ekstrakurikuler</h3>
-    <div class="form-row">
-      <input type="text" id="add-nama-ekskul" placeholder="Nama Ekstrakurikuler Baru">
-      <button class="btn btn-primary" onclick="addEkskul()">+ Tambah Ekskul</button>
-    </div>
-    <table>
-      <thead><tr><th>No</th><th>Nama Ekstrakurikuler</th><th>Aksi</th></tr></thead>
-      <tbody id="tbl-ekskul"></tbody>
-    </table>
-  </div>
-
-  <!-- 3. Data Siswa & Pilihan (Opsi Pilihan Kelas 7 A-G dan 8 A-G Tambahan) -->
-  <div id="p-siswa" class="panel">
-    <h3>Data Siswa & Pilihan Ekstrakurikuler</h3>
-    <div class="form-row">
-      <select id="filter-kelas" onchange="renderTableSiswa(rawSelections)">
-        <option value="">-- Semua Kelas --</option>
-        <optgroup label="Semua Tingkat">
-          <option value="7">Semua Kelas 7</option>
-          <option value="8">Semua Kelas 8</option>
-        </optgroup>
-        <optgroup label="Rincian Kelas 7">
-          <option value="7A">Kelas 7A</option>
-          <option value="7B">Kelas 7B</option>
-          <option value="7C">Kelas 7C</option>
-          <option value="7D">Kelas 7D</option>
-          <option value="7E">Kelas 7E</option>
-          <option value="7F">Kelas 7F</option>
-          <option value="7G">Kelas 7G</option>
-        </optgroup>
-        <optgroup label="Rincian Kelas 8">
-          <option value="8A">Kelas 8A</option>
-          <option value="8B">Kelas 8B</option>
-          <option value="8C">Kelas 8C</option>
-          <option value="8D">Kelas 8D</option>
-          <option value="8E">Kelas 8E</option>
-          <option value="8F">Kelas 8F</option>
-          <option value="8G">Kelas 8G</option>
-        </optgroup>
-      </select>
-      <button class="btn btn-success" onclick="exportDataCSV()">📥 Export Rekap (CSV)</button>
-    </div>
-    <table>
-      <thead><tr><th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Pilihan 1</th><th>Pilihan 2</th><th>Pilihan 3</th><th>Aksi</th></tr></thead>
-      <tbody id="tbl-siswa"></tbody>
-    </table>
-  </div>
-
-  <!-- 4. Prestasi Siswa -->
-  <div id="p-prestasi" class="panel">
-    <h3>Pencatatan Prestasi Siswa</h3>
-    <div class="form-row">
-      <select id="pres-student-id"><option value="">-- Pilih Nama Peserta/Siswa --</option></select>
-      <select id="pres-jenis"><option value="Akademik">Akademik</option><option value="Non-Akademik">Non-Akademik</option></select>
-      <input type="text" id="pres-nama" placeholder="Nama Kejuaraan/Lomba">
-      <input type="text" id="pres-peringkat" placeholder="Juara 1 / Emas">
-      <input type="text" id="pres-tingkat" placeholder="Kab/Prov/Nasional">
-      <button class="btn btn-primary" onclick="savePrestasi()">+ Simpan Prestasi</button>
-    </div>
-    <table>
-      <thead><tr><th>No</th><th>Nama Peserta</th><th>Jenis</th><th>Nama Lomba</th><th>Peringkat</th><th>Tingkat</th><th>Aksi</th></tr></thead>
-      <tbody id="tbl-prestasi"></tbody>
-    </table>
-  </div>
-
-  <!-- 5. Rencana Lomba & RAB AI -->
-  <div id="p-rab" class="panel">
-    <h3>Penyusunan RAB Rencana Lomba (Tabel AI)</h3>
-    <div class="form-row">
-      <input type="text" id="rab-nama" placeholder="Nama Kejuaraan/Lomba">
-      <input type="number" id="rab-peserta" placeholder="Jumlah Peserta">
-      <button class="btn btn-primary" onclick="generateRABTableAI()">🤖 Generate Tabel RAB AI</button>
-    </div>
-    <div style="margin-top:20px; display:flex; gap:8px;">
-      <button class="btn btn-primary" onclick="addRABRow()">+ Tambah Item Manual</button>
-      <button class="btn btn-danger" onclick="clearAllRAB()">Hapus Semua Data Tabel</button>
-      <button class="btn btn-success" onclick="exportRABPDF()">Export PDF</button>
-      <button class="btn btn-warning" onclick="exportRABCSV()">Export CSV</button>
-    </div>
-    <table id="tbl-rab" style="margin-top:15px;">
-      <thead>
-        <tr>
-          <th>No</th><th>Kebutuhan</th><th>Jumlah Barang</th><th>Harga Satuan (Rp)</th><th>Lama Kegiatan</th><th>Total Jumlah (Rp)</th><th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="total-box" id="rab-total-display">Total RAB: Rp 0</div>
-  </div>
-
-  <!-- 6. Penilaian Ekstrakurikuler -->
-  <div id="p-nilai" class="panel">
-    <h3>Penilaian Ekstrakurikuler</h3>
-    <div class="form-row">
-      <select id="sel-ekskul-nilai" onchange="loadSiswaByEkskul()">
-        <option value="">-- Pilih Ekstrakurikuler --</option>
-      </select>
-    </div>
-
-    <!-- Tombol Aksi Download & Upload -->
-    <div class="action-group">
-      <button class="btn btn-success" onclick="downloadDaftarSiswaEkskulCSV()">📥 Download Daftar Siswa (CSV)</button>
-      <button class="btn btn-warning" onclick="downloadDaftarSiswaEkskulPDF()">📄 Download PDF Anggota</button>
-      <button class="btn btn-primary" onclick="triggerFileInput()">📤 Upload File Nilai (CSV)</button>
-      <input type="file" id="file-upload-nilai" accept=".csv" style="display:none;" onchange="uploadNilaiCSV(event)">
-    </div>
-
-    <table id="tbl-penilaian-container">
-      <thead>
-        <tr>
-          <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Nilai Predikat</th><th>Catatan Pembina</th><th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody id="tbl-penilaian"></tbody>
-    </table>
-  </div>
-
-  <!-- 7. Riwayat Perubahan -->
-  <div id="p-audit" class="panel">
-    <h3>Riwayat Perubahan Data (Audit Log)</h3>
-    <table>
-      <thead><tr><th>No</th><th>Waktu</th><th>Pengguna</th><th>Aksi</th><th>Detail</th></tr></thead>
-      <tbody id="tbl-audit"></tbody>
-    </table>
-  </div>
-
-  <!-- 8. Pengaturan -->
-  <div id="p-pengaturan" class="panel">
-    <h3>Pengaturan Periode & System</h3>
-    <div style="background:#f1f5f9; padding:15px; border-radius:6px; margin-bottom:20px;">
-      <h4>Kontrol Periode Pendaftaran</h4>
-      <button class="btn btn-danger" onclick="togglePeriode('TUTUP')">🔒 Tutup Periode Pendaftaran</button>
-      <button class="btn btn-success" onclick="togglePeriode('BUKA')">🔓 Buka Periode Pendaftaran</button>
-    </div>
-  </div>
-
-  <!-- 9. Backup Data -->
-  <div id="p-backup" class="panel">
-    <h3>Backup Data</h3>
-    <button class="btn btn-primary" onclick="exportDataCSV()">💾 Backup Seluruh Data (CSV)</button>
-  </div>
-</div>
-
-<script>
-  const SUPABASE_URL = 'https://ggpcizwstwiselfzsbbi.supabase.co';
-  // PASTIKAN GANTI DENGAN ANON KEY SUPABASE ASLI MILIKMU:
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdncGNpendzdHdpc2VsZnpzYmJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NjE5MDYsImV4cCI6MjEwNzQzNzkwNn0.IghtFISYdlY_mVkVGrz3bZvsOTq3NN6q2jYlKybU81E';
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  let rawSelections = [];
-  let rawStudents = [];
-  let rawEkskul = [];
-  let currentFilteredEkskulSiswa = [];
-  let rabItems = [];
-  let userSession = null;
-
-  function checkAuthRole() {
-    const sessionStr = localStorage.getItem('user_session');
-    if (!sessionStr) {
-      window.location.href = 'login.html';
-      return;
-    }
-
-    userSession = JSON.parse(sessionStr);
-    document.getElementById('lbl-user-info').innerText = `${userSession.email} (${userSession.role.toUpperCase()})`;
-
-    if (userSession.role === 'pengampu') {
-      document.querySelectorAll('.admin-menu').forEach(el => el.style.display = 'none');
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      document.getElementById('p-nilai').classList.add('active');
-      document.getElementById('btn-menu-nilai').classList.add('active');
-    }
-  }
-
-  function switchPanel(btn, panelId) {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(panelId).classList.add('active');
-    btn.classList.add('active');
-  }
-
-  async function loadDashboardData() {
-    checkAuthRole();
-
-    const { data: eData } = await db.from('extracurriculars').select('*').order('nama');
-    if (eData) {
-      rawEkskul = eData;
-      document.getElementById('cnt-ekskul').innerText = eData.length;
-      renderTableEkskul(eData);
-
-      const opts = eData.map(e => `<option value="${e.id}">${e.nama}</option>`).join('');
-      const selEkskul = document.getElementById('sel-ekskul-nilai');
-      selEkskul.innerHTML = '<option value="">-- Pilih Ekstrakurikuler --</option>' + opts;
-
-      if (userSession && userSession.role === 'pengampu' && userSession.ekskul_id) {
-        selEkskul.value = userSession.ekskul_id;
-        selEkskul.disabled = true;
-        loadSiswaByEkskul();
-      }
-    }
-
-    const { data: sData } = await db.from('students').select('*').order('nama_lengkap');
-    if (sData) {
-      rawStudents = sData;
-      document.getElementById('pres-student-id').innerHTML = '<option value="">-- Pilih Nama Peserta/Siswa --</option>' + 
-        sData.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.nisn}) - ${s.kelas}</option>`).join('');
-    }
-
-    const { data: selData } = await db.from('selections').select(`
-      id,
-      students ( id, nisn, nama_lengkap, kelas ),
-      e1:extracurricular_1_id ( id, nama ),
-      e2:extracurricular_2_id ( id, nama ),
-      e3:extracurricular_3_id ( id, nama )
-    `);
-
-    if (selData) {
-      rawSelections = selData;
-      document.getElementById('cnt-siswa').innerText = selData.length;
-      document.getElementById('cnt-k7').innerText = selData.filter(s => s.students && String(s.students.kelas).startsWith('7')).length;
-      document.getElementById('cnt-k8').innerText = selData.filter(s => s.students && String(s.students.kelas).startsWith('8')).length;
-      renderTableSiswa(selData);
-    }
-
-    loadPrestasi();
-  }
-
-  // --- LOGIKA PENYARINGAN KELAS FLEKSIBEL (SUPPORT 7, 8, MAUPUN 7A-7G, 8A-8G) ---
-  function renderTableSiswa(list) {
-    const filterVal = document.getElementById('filter-kelas').value.toUpperCase().trim();
-    let filtered = list;
-
-    if (filterVal) {
-      filtered = list.filter(s => {
-        if (!s.students || !s.students.kelas) return false;
-        const kSiswa = String(s.students.kelas).toUpperCase().trim();
-
-        // Jika filter yang dipilih adalah '7' atau '8' saja
-        if (filterVal === '7' || filterVal === '8') {
-          return kSiswa.startsWith(filterVal);
-        }
-        // Jika filter yang dipilih adalah spesifik '7A', '7B', dst.
-        return kSiswa === filterVal || kSiswa === `KELAS ${filterVal}`;
-      });
-    }
-
-    document.getElementById('tbl-siswa').innerHTML = filtered.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td>${item.students ? item.students.nisn : '-'}</td>
-        <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-        <td>${item.students ? (String(item.students.kelas).startsWith('Kelas') ? item.students.kelas : 'Kelas ' + item.students.kelas) : '-'}</td>
-        <td>${item.e1 ? item.e1.nama : '-'}</td>
-        <td>${item.e2 ? item.e2.nama : '-'}</td>
-        <td>${item.e3 ? item.e3.nama : '-'}</td>
-        <td>
-  <button class="btn btn-warning btn-sm me-1" onclick="openEditModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">Edit</button>
-  <button class="btn btn-danger btn-sm" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button>
-</td>
-      </tr>
-    `).join('');
-  }
-
-  // --- LOGIKA PENILAIAN, DOWNLOAD DAFTAR SISWA, & UPLOAD NILAI ---
-  async function loadSiswaByEkskul() {
-    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
-    const tbody = document.getElementById('tbl-penilaian');
-
-    if (!ekskulId) {
-      tbody.innerHTML = '';
-      currentFilteredEkskulSiswa = [];
-      return;
-    }
-
-    const { data: existingGrades, error } = await db.from('grades').select('*').eq('extracurricular_id', ekskulId);
-    if (error) console.error('Gagal mengambil nilai:', error);
-
-    const gradeMap = {};
-    if (existingGrades) {
-      existingGrades.forEach(g => { 
-        if (g.student_id) gradeMap[g.student_id.trim()] = g; 
-      });
-    }
-
-    currentFilteredEkskulSiswa = rawSelections.filter(s => 
-      (s.e1 && s.e1.id === ekskulId) || 
-      (s.e2 && s.e2.id === ekskulId) || 
-      (s.e3 && s.e3.id === ekskulId)
-    );
-
-    tbody.innerHTML = currentFilteredEkskulSiswa.map((item, idx) => {
-      const studentId = item.students ? item.students.id.trim() : '';
-      const savedGrade = gradeMap[studentId] || {};
-      const predikatVal = savedGrade.predikat || 'B';
-      const catatanVal = savedGrade.catatan || '';
-
-      return `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${item.students ? item.students.nisn : '-'}</td>
-          <td><strong>${item.students ? item.students.nama_lengkap : '-'}</strong></td>
-          <td>${item.students ? (String(item.students.kelas).startsWith('Kelas') ? item.students.kelas : 'Kelas ' + item.students.kelas) : '-'}</td>
-          <td>
-            <select id="pred-${studentId}" style="width:70px">
-              <option value="A" ${predikatVal === 'A' ? 'selected' : ''}>A</option>
-              <option value="B" ${predikatVal === 'B' ? 'selected' : ''}>B</option>
-              <option value="C" ${predikatVal === 'C' ? 'selected' : ''}>C</option>
-              <option value="D" ${predikatVal === 'D' ? 'selected' : ''}>D</option>
-            </select>
-          </td>
-          <td><input type="text" id="cat-${studentId}" value="${catatanVal}" placeholder="Catatan perkembangan..." style="width:100%"></td>
-          <td><button class="btn btn-success" onclick="saveNilaiSiswa('${studentId}', '${ekskulId}')">Simpan</button></td>
-        </tr>
-      `;
-    }).join('');
-  }
-
-  async function saveNilaiSiswa(studentId, ekskulId) {
-    if (!studentId || !ekskulId) return alert('Data tidak valid!');
-    const predikat = document.getElementById(`pred-${studentId}`).value;
-    const catatan = document.getElementById(`cat-${studentId}`).value.trim();
-
-    const { error } = await db.from('grades').upsert([{
-      student_id: studentId,
-      extracurricular_id: ekskulId,
-      predikat: predikat,
-      catatan: catatan,
-      updated_at: new Date().toISOString()
-    }], { onConflict: 'student_id,extracurricular_id' });
-
-    if (error) alert('Gagal: ' + error.message);
-    else alert('Nilai berhasil disimpan permanen!');
-  }
-
-  function downloadDaftarSiswaEkskulCSV() {
-    const ekskulSelect = document.getElementById('sel-ekskul-nilai');
-    const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
-    if (!ekskulSelect.value) return alert('Pilih Ekstrakurikuler terlebih dahulu!');
-
-    let csv = "Student_ID;NISN;Nama Lengkap;Kelas;Predikat;Catatan\n";
-    currentFilteredEkskulSiswa.forEach(s => {
-      if (s.students) {
-        const pred = document.getElementById(`pred-${s.students.id}`) ? document.getElementById(`pred-${s.students.id}`).value : 'B';
-        const cat = document.getElementById(`cat-${s.students.id}`) ? document.getElementById(`cat-${s.students.id}`).value : '';
-        csv += `"${s.students.id}";"${s.students.nisn}";"${s.students.nama_lengkap}";"${s.students.kelas}";"${pred}";"${cat}"\n`;
-      }
-    });
-
-    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Daftar_Siswa_${ekskulNama.replace(/\s+/g, '_')}.csv`;
-    link.click();
-  }
-
-  function downloadDaftarSiswaEkskulPDF() {
-    const ekskulSelect = document.getElementById('sel-ekskul-nilai');
-    const ekskulNama = ekskulSelect.options[ekskulSelect.selectedIndex].text;
-    if (!ekskulSelect.value) return alert('Pilih Ekstrakurikuler terlebih dahulu!');
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text(`Daftar Anggota Ekstrakurikuler: ${ekskulNama}`, 14, 15);
-    doc.autoTable({ html: '#tbl-penilaian-container', startY: 25 });
-    doc.save(`Anggota_${ekskulNama.replace(/\s+/g, '_')}.pdf`);
-  }
-
-  function triggerFileInput() {
-    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
-    if (!ekskulId) return alert('Pilih Ekstrakurikuler terlebih dahulu sebelum upload nilai!');
-    document.getElementById('file-upload-nilai').click();
-  }
-
-  function uploadNilaiCSV(event) {
-    const file = event.target.files[0];
-    const ekskulId = document.getElementById('sel-ekskul-nilai').value;
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-      const text = e.target.result;
-      const cleanText = text.replace(/^\uFEFF/, '');
-      const lines = cleanText.split(/\r\n|\n|\r/);
-      let successCount = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        const delimiter = line.includes(';') ? ';' : ',';
-        const parts = line.split(delimiter).map(p => p.trim().replace(/^"|"$/g, ''));
-
-        if (parts.length >= 5) {
-          const studentId = parts[0].trim();
-          const predikat = (parts[4] || 'B').trim().toUpperCase();
-          const catatan = parts[5] ? parts[5].trim() : '';
-
-          if (studentId && studentId.toLowerCase() !== 'student_id' && studentId.length > 20) {
-            const { error } = await db.from('grades').upsert([{
-              student_id: studentId,
-              extracurricular_id: ekskulId,
-              predikat: predikat,
-              catatan: catatan,
-              updated_at: new Date().toISOString()
-            }], { onConflict: 'student_id,extracurricular_id' });
-
-            if (!error) successCount++;
-          }
-        }
-      }
-
-      event.target.value = '';
-
-      if (successCount > 0) {
-        alert(`Berhasil mengunggah dan menyimpan ${successCount} nilai siswa ke database!`);
-        await loadSiswaByEkskul();
-      } else {
-        alert('Gagal memproses file. Pastikan file CSV diunduh langsung dari tombol "Download Daftar Siswa (CSV)"!');
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function renderTableEkskul(list) {
-    document.getElementById('tbl-ekskul').innerHTML = list.map((item, idx) => `
-      <tr>
-        <td>${idx + 1}</td>
-        <td><strong>${item.nama}</strong></td>
-        <td><button class="btn btn-danger" onclick="deleteEkskul('${item.id}')">Hapus</button></td>
-      </tr>
-    `).join('');
-  }
-
-  function generateRABTableAI() {
-    const nama = document.getElementById('rab-nama').value;
-    const peserta = parseInt(document.getElementById('rab-peserta').value) || 1;
-    if (!nama) return alert('Mohon isi nama kejuaraan/lomba!');
-
-    rabItems = [
-      { kebutuhan: '1. Alat Tulis (Bolpoint & Kertas)', jumlah: peserta, harga: 15000, lama: 1 },
-      { kebutuhan: '2. Transportasi Peserta', jumlah: peserta, harga: 50000, lama: 2 },
-      { kebutuhan: '3. Konsumsi & Ekstra Fooding', jumlah: peserta, harga: 25000, lama: 3 },
-      { kebutuhan: '4. Biaya Pendaftaran Kontingen', jumlah: 1, harga: 150000, lama: 1 },
-      { kebutuhan: '5. Perlengkapan & Bahan Khusus', jumlah: 2, harga: 100000, lama: 1 }
-    ];
-
-    renderRABTable();
-  }
-
-  function renderRABTable() {
-    const tbody = document.querySelector('#tbl-rab tbody');
-    let totalRAB = 0;
-
-    tbody.innerHTML = rabItems.map((item, idx) => {
-      const subtotal = item.jumlah * item.harga * item.lama;
-      totalRAB += subtotal;
-      return `
-        <tr>
-          <td>${idx + 1}</td>
-          <td><input type="text" value="${item.kebutuhan}" onchange="updateRABItem(${idx}, 'kebutuhan', this.value)"></td>
-          <td><input type="number" value="${item.jumlah}" style="width:70px" onchange="updateRABItem(${idx}, 'jumlah', this.value)"></td>
-          <td><input type="number" value="${item.harga}" style="width:100px" onchange="updateRABItem(${idx}, 'harga', this.value)"></td>
-          <td><input type="number" value="${item.lama}" style="width:70px" onchange="updateRABItem(${idx}, 'lama', this.value)"></td>
-          <td><strong>Rp ${subtotal.toLocaleString('id-ID')}</strong></td>
-          <td><button class="btn btn-danger" onclick="deleteRABRow(${idx})">Hapus</button></td>
-        </tr>
-      `;
-    }).join('');
-
-    document.getElementById('rab-total-display').innerText = `Total RAB: Rp ${totalRAB.toLocaleString('id-ID')}`;
-  }
-
-  function updateRABItem(idx, key, val) {
-    rabItems[idx][key] = key === 'kebutuhan' ? val : parseFloat(val) || 0;
-    renderRABTable();
-  }
-
-  function addRABRow() {
-    rabItems.push({ kebutuhan: 'Item Baru', jumlah: 1, harga: 0, lama: 1 });
-    renderRABTable();
-  }
-
-  function deleteRABRow(idx) {
-    rabItems.splice(idx, 1);
-    renderRABTable();
-  }
-
-  function clearAllRAB() {
-    if (confirm('Hapus seluruh isi tabel RAB?')) {
-      rabItems = [];
-      renderRABTable();
-    }
-  }
-
-  async function savePrestasi() {
-    const student_id = document.getElementById('pres-student-id').value;
-    const jenis_prestasi = document.getElementById('pres-jenis').value;
-    const nama_lomba = document.getElementById('pres-nama').value.trim();
-    const peringkat = document.getElementById('pres-peringkat').value.trim();
-    const tingkat = document.getElementById('pres-tingkat').value.trim();
-
-    if (!student_id || !nama_lomba || !peringkat) {
-      return alert('Mohon lengkapi Nama Peserta, Nama Lomba, dan Peringkat!');
-    }
-
-    const selectedStudent = rawStudents.find(s => s.id === student_id);
-
-    const { error } = await db.from('achievements').insert([{
-      student_id,
-      nama_peserta: selectedStudent ? selectedStudent.nama_lengkap : '',
-      jenis_prestasi,
-      nama_lomba,
-      peringkat,
-      tingkat,
-      tahun_pelajaran: '2026/2027'
-    }]);
-
-    if (error) alert('Gagal: ' + error.message);
-    else { alert('Prestasi berhasil disimpan!'); loadPrestasi(); }
-  }
-
-  async function loadPrestasi() {
-    const { data } = await db.from('achievements').select('*').order('created_at', { ascending: false });
-    const tbody = document.getElementById('tbl-prestasi');
-
-    if (data && tbody) {
-      tbody.innerHTML = data.map((p, idx) => `
-        <tr>
-          <td>${idx + 1}</td>
-          <td><strong>${p.nama_peserta || '-'}</strong></td>
-          <td>${p.jenis_prestasi}</td>
-          <td>${p.nama_lomba}</td>
-          <td>${p.peringkat}</td>
-          <td>${p.tingkat}</td>
-          <td><button class="btn btn-danger" onclick="deletePrestasi('${p.id}')">Hapus</button></td>
-        </tr>
-      `).join('');
-    }
-  }
-
-  async function deletePrestasi(id) {
-    if (confirm('Hapus pencatatan prestasi ini?')) {
-      await db.from('achievements').delete().eq('id', id);
-      loadPrestasi();
-    }
-  }
-
-  async function addEkskul() {
-    const nama = document.getElementById('add-nama-ekskul').value.trim();
-    if (!nama) return alert('Nama ekskul tidak boleh kosong!');
-
-    const { error } = await db.from('extracurriculars').insert([{ nama }]);
-    if (error) alert('Gagal: ' + error.message);
-    else { document.getElementById('add-nama-ekskul').value = ''; loadDashboardData(); }
-  }
-
-  async function deleteEkskul(id) {
-    if (confirm('Yakin ingin menghapus ekstrakurikuler ini?')) {
-      await db.from('extracurriculars').delete().eq('id', id);
-      loadDashboardData();
-    }
-  }
-
-  async function deleteSelection(selectionId, studentId) {
-    if (confirm('Yakin ingin menghapus data siswa beserta pilihannya?')) {
-      await db.from('selections').delete().eq('id', selectionId);
-      if (studentId) await db.from('students').delete().eq('id', studentId);
-      loadDashboardData();
-    }
-  }
-// Fungsi Buka Modal Edit
-async function openEditModal(item) {
-  const student = item.students || {};
-  document.getElementById('edit_student_id').value = student.id || '';
-  document.getElementById('edit_selection_id').value = item.id || '';
-  document.getElementById('edit_nisn').value = student.nisn || '';
-  document.getElementById('edit_nama').value = student.nama_lengkap || '';
-  document.getElementById('edit_kelas').value = student.kelas || '';
-
-  // Ambil daftar ekskul dari database Supabase
-  let list = [];
-  const { data, error } = await db.from('extracurriculars').select('*');
-  if (data) {
-    list = data;
-  } else if (typeof ekskulList !== 'undefined' && ekskulList.length > 0) {
-    list = ekskulList;
-  }
-
-  // Generate dropdown dengan pengecekan nama kolom (nama / name)
-  const optionsHtml = '<option value="">-- Tidak Memilih --</option>' + 
-    list.map(e => {
-      const namaEkskul = e.nama || e.name || 'Ekskul ' + e.id;
-      return `<option value="${e.id}">${namaEkskul}</option>`;
-    }).join('');
-
-  const sel1 = document.getElementById('edit_ekskul1');
-  const sel2 = document.getElementById('edit_ekskul2');
-  const sel3 = document.getElementById('edit_ekskul3');
-
-  sel1.innerHTML = optionsHtml;
-  sel2.innerHTML = optionsHtml;
-  sel3.innerHTML = optionsHtml;
-
-  // Set nilai terpilih saat ini
-  sel1.value = item.extracurricular_1_id || '';
-  sel2.value = item.extracurricular_2_id || '';
-  sel3.value = item.extracurricular_3_id || '';
-
-  // Tampilkan Modal
-  const modalEl = document.getElementById('editStudentModal');
-  const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-  modal.show();
-}
-
-// Fungsi Simpan Perubahan ke Supabase
-async function saveStudentEdit() {
-  const studentId = document.getElementById('edit_student_id').value;
-  const selectionId = document.getElementById('edit_selection_id').value;
-
-  const newNisn = document.getElementById('edit_nisn').value;
-  const newNama = document.getElementById('edit_nama').value;
-  const newKelas = document.getElementById('edit_kelas').value;
-
-  const newE1 = document.getElementById('edit_ekskul1').value || null;
-  const newE2 = document.getElementById('edit_ekskul2').value || null;
-  const newE3 = document.getElementById('edit_ekskul3').value || null;
-
-  try {
-    // 1. Update data siswa
-    if (studentId) {
-      const { error: errStudent } = await db
-        .from('students')
-        .update({
-          nisn: newNisn,
-          nama_lengkap: newNama,
-          kelas: newKelas
-        })
-        .eq('id', studentId);
-
-      if (errStudent) throw errStudent;
-    }
-
-    // 2. Update pilihan ekskul
-    if (selectionId) {
-      const { error: errSelection } = await db
-        .from('selections')
-        .update({
-          extracurricular_1_id: newE1,
-          extracurricular_2_id: newE2,
-          extracurricular_3_id: newE3
-        })
-        .eq('id', selectionId);
-
-      if (errSelection) throw errSelection;
-    }
-
-    alert('Data siswa dan pilihan ekstrakurikuler berhasil diperbarui!');
-    
-    // Tutup Modal & Refresh Tabel
-    const modalEl = document.getElementById('editStudentModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-
-    loadDashboardData();
-
-  } catch (err) {
-    alert('Gagal mengedit data: ' + err.message);
-  }
-}
-  function exportDataCSV() {
-    let csv = "NISN;Nama Lengkap;Kelas;Pilihan 1;Pilihan 2;Pilihan 3\n";
-    rawSelections.forEach(s => {
-      if (s.students) {
-        csv += `"${s.students.nisn}";"${s.students.nama_lengkap}";"${s.students.kelas}";"${s.e1 ? s.e1.nama : '-'}";"${s.e2 ? s.e2.nama : '-'}";"${s.e3 ? s.e3.nama : '-'}"\n`;
-      }
-    });
-
-    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'Rekap_Pendaftaran_Ekskul.csv';
-    link.click();
-  }
-
-  function exportRABPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.text("Rencana Anggaran Biaya (RAB) Lomba", 14, 15);
-    doc.autoTable({ html: '#tbl-rab', startY: 25 });
-    doc.save("RAB_Rencana_Lomba.pdf");
-  }
-
-  function exportRABCSV() {
-    let csv = "No;Kebutuhan;Jumlah Barang;Harga Satuan;Lama Kegiatan;Total Jumlah\n";
-    rabItems.forEach((item, idx) => {
-      const subtotal = item.jumlah * item.harga * item.lama;
-      csv += `"${idx+1}";"${item.kebutuhan}";"${item.jumlah}";"${item.harga}";"${item.lama}";"${subtotal}"\n`;
-    });
-    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = 'RAB_Lomba.csv';
-    link.click();
-  }
-
-  function togglePeriode(status) {
-    const el = document.getElementById('lbl-status-periode');
-    el.innerText = status;
-    el.className = status === 'BUKA' ? 'buka' : 'tutup';
-    alert('Status periode diubah menjadi: ' + status);
-  }
-
-  function logout() {
-    localStorage.removeItem('user_session');
-    window.location.href = 'login.html';
-  }
-
-  document.addEventListener('DOMContentLoaded', loadDashboardData);
-</script>
-  </script>
-
- <!-- Modal Edit Data Siswa & Pilihan Ekskul -->
-<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" style="z-index: 1055;">
+<!-- Modal Edit Data Siswa & Pilihan Ekskul (Tersimpan Sempurna, Tersembunyi Default) -->
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -862,7 +265,386 @@ async function saveStudentEdit() {
     </div>
   </div>
 </div>
-</body>
-</html>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Initial Inisialisasi Database Supabase (Sesuaikan credentials project Anda bila perlu)
+  const SUPABASE_URL = "YOUR_SUPABASE_URL";
+  const SUPABASE_ANON_KEY = "YOUR_SUPABASE_KEY";
+  const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  let rawSelections = [];
+  let rawStudents = [];
+  let ekskulList = [];
+  let rabItems = [];
+
+  // Tab Switcher Handler
+  function switchTab(tab) {
+    document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
+    document.getElementById('section-rekap').style.display = 'none';
+    document.getElementById('section-ekskul').style.display = 'none';
+    document.getElementById('section-prestasi').style.display = 'none';
+    document.getElementById('section-rab').style.display = 'none';
+
+    if(tab === 'rekap') {
+      document.getElementById('section-rekap').style.display = 'block';
+      event.target.classList.add('active');
+    } else if(tab === 'ekskul') {
+      document.getElementById('section-ekskul').style.display = 'block';
+      event.target.classList.add('active');
+    } else if(tab === 'prestasi') {
+      document.getElementById('section-prestasi').style.display = 'block';
+      event.target.classList.add('active');
+      loadPrestasi();
+    } else if(tab === 'rab') {
+      document.getElementById('section-rab').style.display = 'block';
+      event.target.classList.add('active');
+    }
+  }
+
+  // Load Data Rekapitulasi Utama
+  async function loadDashboardData() {
+    try {
+      // 1. Fetch Ekskul
+      const { data: eData } = await db.from('extracurriculars').select('*').order('name');
+      ekskulList = eData || [];
+
+      // Render Tabel Ekskul Management
+      const tblEkskul = document.getElementById('tbl-ekskul-body');
+      if(tblEkskul) {
+        tblEkskul.innerHTML = ekskulList.map((e, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${e.name || e.nama}</strong></td>
+            <td><button class="btn btn-sm btn-danger" onclick="deleteEkskul('${e.id}')">Hapus</button></td>
+          </tr>
+        `).join('') || '<tr><td colspan="3" class="text-center">Belum ada data ekskul</td></tr>';
+      }
+
+      // 2. Fetch Rekap Selections + Students
+      const { data: sData, error: sErr } = await db
+        .from('selections')
+        .select(`
+          id, student_id, extracurricular_1_id, extracurricular_2_id, extracurricular_3_id,
+          students ( id, nisn, nama_lengkap, kelas ),
+          e1:extracurricular_1_id ( id, name, nama ),
+          e2:extracurricular_2_id ( id, name, nama ),
+          e3:extracurricular_3_id ( id, name, nama )
+        `);
+
+      if(sErr) throw sErr;
+      rawSelections = sData || [];
+
+      const tbody = document.getElementById('tbl-rekap-body');
+      if (tbody) {
+        tbody.innerHTML = rawSelections.map((item, idx) => {
+          const st = item.students || {};
+          const e1Nama = item.e1 ? (item.e1.name || item.e1.nama) : '-';
+          const e2Nama = item.e2 ? (item.e2.name || item.e2.nama) : '-';
+          const e3Nama = item.e3 ? (item.e3.name || item.e3.nama) : '-';
+          
+          const itemJson = JSON.stringify(item).replace(/'/g, "&apos;");
+
+          return `
+            <tr>
+              <td>${idx + 1}</td>
+              <td>${st.nisn || '-'}</td>
+              <td><strong>${st.nama_lengkap || '-'}</strong></td>
+              <td>${st.kelas || '-'}</td>
+              <td><span class="badge bg-primary">${e1Nama}</span></td>
+              <td><span class="badge bg-secondary">${e2Nama}</span></td>
+              <td><span class="badge bg-info text-dark">${e3Nama}</span></td>
+              <td>
+                <button class="btn btn-sm btn-warning me-1" onclick='openEditModal(${itemJson})'>Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSelection('${item.id}', '${st.id || ''}')">Hapus</button>
+              </td>
+            </tr>
+          `;
+        }).join('') || '<tr><td colspan="8" class="text-center">Belum ada pendaftaran siswa</td></tr>';
+      }
+
+      // 3. Fetch Data Siswa untuk Dropdown Prestasi
+      const { data: stList } = await db.from('students').select('*').order('nama_lengkap');
+      rawStudents = stList || [];
+      const presSelect = document.getElementById('pres-student-id');
+      if(presSelect) {
+        presSelect.innerHTML = '<option value="">-- Pilih Siswa --</option>' +
+          rawStudents.map(s => `<option value="${s.id}">${s.nama_lengkap} (${s.kelas})</option>`).join('');
+      }
+
+    } catch (err) {
+      console.error('Gagal memuat dashboard:', err);
+    }
+  }
+
+  // --- FUNGSI MODAL EDIT (DINAMIS & TERPOP-UP) ---
+  async function openEditModal(item) {
+    let dataItem = item;
+    if (typeof item === 'string') {
+      try { dataItem = JSON.parse(item); } catch(e) {}
+    }
+
+    const student = dataItem.students || dataItem;
+    document.getElementById('edit_student_id').value = student.id || dataItem.student_id || '';
+    document.getElementById('edit_selection_id').value = dataItem.id || '';
+    document.getElementById('edit_nisn').value = student.nisn || '';
+    document.getElementById('edit_nama').value = student.nama_lengkap || student.nama || '';
+    document.getElementById('edit_kelas').value = student.kelas || '';
+
+    // Ambil opsi ekskul dari Supabase jika belum ter-load
+    let list = ekskulList;
+    if (!list || list.length === 0) {
+      const { data: ekskulData } = await db.from('extracurriculars').select('*');
+      if (ekskulData) list = ekskulData;
+    }
+
+    let optionsHtml = '<option value="">-- Tidak Memilih --</option>';
+    list.forEach(e => {
+      const namaEkskul = e.name || e.nama || e.nama_ekskul || ('Ekskul ' + e.id);
+      optionsHtml += `<option value="${e.id}">${namaEkskul}</option>`;
+    });
+
+    const sel1 = document.getElementById('edit_ekskul1');
+    const sel2 = document.getElementById('edit_ekskul2');
+    const sel3 = document.getElementById('edit_ekskul3');
+
+    sel1.innerHTML = optionsHtml;
+    sel2.innerHTML = optionsHtml;
+    sel3.innerHTML = optionsHtml;
+
+    sel1.value = dataItem.extracurricular_1_id || '';
+    sel2.value = dataItem.extracurricular_2_id || '';
+    sel3.value = dataItem.extracurricular_3_id || '';
+
+    // Pop up modal Bootstrap di tengah layar
+    const modalEl = document.getElementById('editStudentModal');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+  }
+
+  // Save Perubahan Data Siswa & Pilihan Ekskul ke Database
+  async function saveStudentEdit() {
+    const studentId = document.getElementById('edit_student_id').value;
+    const selectionId = document.getElementById('edit_selection_id').value;
+
+    const newNisn = document.getElementById('edit_nisn').value;
+    const newNama = document.getElementById('edit_nama').value;
+    const newKelas = document.getElementById('edit_kelas').value;
+
+    const newE1 = document.getElementById('edit_ekskul1').value || null;
+    const newE2 = document.getElementById('edit_ekskul2').value || null;
+    const newE3 = document.getElementById('edit_ekskul3').value || null;
+
+    try {
+      if (studentId) {
+        const { error: errStudent } = await db
+          .from('students')
+          .update({ nisn: newNisn, nama_lengkap: newNama, kelas: newKelas })
+          .eq('id', studentId);
+
+        if (errStudent) throw errStudent;
+      }
+
+      if (selectionId) {
+        const { error: errSelection } = await db
+          .from('selections')
+          .update({
+            extracurricular_1_id: newE1,
+            extracurricular_2_id: newE2,
+            extracurricular_3_id: newE3
+          })
+          .eq('id', selectionId);
+
+        if (errSelection) throw errSelection;
+      }
+
+      alert('Data siswa dan pilihan ekstrakurikuler berhasil diperbarui!');
+      
+      const modalEl = document.getElementById('editStudentModal');
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      if (modal) modal.hide();
+
+      loadDashboardData();
+
+    } catch (err) {
+      alert('Gagal mengedit data: ' + err.message);
+    }
+  }
+
+  // Delete Selection & Student
+  async function deleteSelection(selectionId, studentId) {
+    if (confirm('Yakin ingin menghapus data siswa beserta pilihannya?')) {
+      await db.from('selections').delete().eq('id', selectionId);
+      if (studentId) await db.from('students').delete().eq('id', studentId);
+      loadDashboardData();
+    }
+  }
+
+  // Add / Delete Ekskul
+  async function addEkskul() {
+    const nama = document.getElementById('add-nama-ekskul').value.trim();
+    if (!nama) return alert('Nama ekskul tidak boleh kosong!');
+    const { error } = await db.from('extracurriculars').insert([{ name: nama }]);
+    if (error) alert('Gagal: ' + error.message);
+    else { document.getElementById('add-nama-ekskul').value = ''; loadDashboardData(); }
+  }
+
+  async function deleteEkskul(id) {
+    if (confirm('Yakin ingin menghapus ekstrakurikuler ini?')) {
+      await db.from('extracurriculars').delete().eq('id', id);
+      loadDashboardData();
+    }
+  }
+
+  // --- PRESTASI & RAB FUNCTIONALITIES ---
+  async function savePrestasi() {
+    const student_id = document.getElementById('pres-student-id').value;
+    const jenis_prestasi = document.getElementById('pres-jenis').value;
+    const nama_lomba = document.getElementById('pres-nama').value.trim();
+    const peringkat = document.getElementById('pres-peringkat').value.trim();
+    const tingkat = document.getElementById('pres-tingkat').value.trim();
+
+    if (!student_id || !nama_lomba || !peringkat) return alert('Mohon lengkapi Form Prestasi!');
+
+    const selectedStudent = rawStudents.find(s => s.id === student_id);
+
+    const { error } = await db.from('achievements').insert([{
+      student_id,
+      nama_peserta: selectedStudent ? selectedStudent.nama_lengkap : '',
+      jenis_prestasi,
+      nama_lomba,
+      peringkat,
+      tingkat,
+      tahun_pelajaran: '2026/2027'
+    }]);
+
+    if (error) alert('Gagal: ' + error.message);
+    else { alert('Prestasi berhasil disimpan!'); loadPrestasi(); }
+  }
+
+  async function loadPrestasi() {
+    const { data } = await db.from('achievements').select('*').order('created_at', { ascending: false });
+    const tbody = document.getElementById('tbl-prestasi');
+    if (data && tbody) {
+      tbody.innerHTML = data.map((p, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td><strong>${p.nama_peserta || '-'}</strong></td>
+          <td>${p.jenis_prestasi}</td>
+          <td>${p.nama_lomba}</td>
+          <td>${p.peringkat}</td>
+          <td>${p.tingkat}</td>
+          <td><button class="btn btn-sm btn-danger" onclick="deletePrestasi('${p.id}')">Hapus</button></td>
+        </tr>
+      `).join('') || '<tr><td colspan="7" class="text-center">Belum ada prestasi</td></tr>';
+    }
+  }
+
+  async function deletePrestasi(id) {
+    if (confirm('Hapus pencatatan prestasi ini?')) {
+      await db.from('achievements').delete().eq('id', id);
+      loadPrestasi();
+    }
+  }
+
+  // RAB Handler
+  function generateRABTableAI() {
+    const nama = document.getElementById('rab-nama').value;
+    const peserta = parseInt(document.getElementById('rab-peserta').value) || 1;
+    if (!nama) return alert('Mohon isi nama kejuaraan/lomba!');
+
+    rabItems = [
+      { kebutuhan: '1. Alat Tulis (Bolpoint & Kertas)', jumlah: peserta, harga: 15000, lama: 1 },
+      { kebutuhan: '2. Transportasi Peserta', jumlah: peserta, harga: 50000, lama: 2 },
+      { kebutuhan: '3. Konsumsi & Ekstra Fooding', jumlah: peserta, harga: 25000, lama: 3 },
+      { kebutuhan: '4. Biaya Pendaftaran Kontingen', jumlah: 1, harga: 150000, lama: 1 },
+      { kebutuhan: '5. Perlengkapan & Bahan Khusus', jumlah: 2, harga: 100000, lama: 1 }
+    ];
+    renderRABTable();
+  }
+
+  function renderRABTable() {
+    const tbody = document.querySelector('#tbl-rab tbody');
+    let totalRAB = 0;
+    tbody.innerHTML = rabItems.map((item, idx) => {
+      const subtotal = item.jumlah * item.harga * item.lama;
+      totalRAB += subtotal;
+      return `
+        <tr>
+          <td>${idx + 1}</td>
+          <td><input type="text" class="form-control" value="${item.kebutuhan}" onchange="updateRABItem(${idx}, 'kebutuhan', this.value)"></td>
+          <td><input type="number" class="form-control" style="width:80px" value="${item.jumlah}" onchange="updateRABItem(${idx}, 'jumlah', this.value)"></td>
+          <td><input type="number" class="form-control" style="width:120px" value="${item.harga}" onchange="updateRABItem(${idx}, 'harga', this.value)"></td>
+          <td><input type="number" class="form-control" style="width:80px" value="${item.lama}" onchange="updateRABItem(${idx}, 'lama', this.value)"></td>
+          <td><strong>Rp ${subtotal.toLocaleString('id-ID')}</strong></td>
+          <td><button class="btn btn-sm btn-danger" onclick="deleteRABRow(${idx})">Hapus</button></td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('rab-total-display').innerText = `Total RAB: Rp ${totalRAB.toLocaleString('id-ID')}`;
+  }
+
+  function updateRABItem(idx, key, val) {
+    rabItems[idx][key] = key === 'kebutuhan' ? val : parseFloat(val) || 0;
+    renderRABTable();
+  }
+
+  function addRABRow() {
+    rabItems.push({ kebutuhan: 'Item Baru', jumlah: 1, harga: 0, lama: 1 });
+    renderRABTable();
+  }
+
+  function deleteRABRow(idx) {
+    rabItems.splice(idx, 1);
+    renderRABTable();
+  }
+
+  // Exporters
+  function exportDataCSV() {
+    let csv = "NISN;Nama Lengkap;Kelas;Pilihan 1;Pilihan 2;Pilihan 3\n";
+    rawSelections.forEach(s => {
+      if (s.students) {
+        csv += `"${s.students.nisn}";"${s.students.nama_lengkap}";"${s.students.kelas}";"${s.e1 ? (s.e1.name || s.e1.nama) : '-' }";"${s.e2 ? (s.e2.name || s.e2.nama) : '-' }";"${s.e3 ? (s.e3.name || s.e3.nama) : '-' }"\n`;
+      }
+    });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'Rekap_Pendaftaran_Ekskul.csv';
+    link.click();
+  }
+
+  function exportRABPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("Rencana Anggaran Biaya (RAB) Lomba", 14, 15);
+    doc.autoTable({ html: '#tbl-rab', startY: 25 });
+    doc.save("RAB_Rencana_Lomba.pdf");
+  }
+
+  function exportRABCSV() {
+    let csv = "No;Kebutuhan;Jumlah Barang;Harga Satuan;Lama Kegiatan;Total Jumlah\n";
+    rabItems.forEach((item, idx) => {
+      const subtotal = item.jumlah * item.harga * item.lama;
+      csv += `"${idx+1}";"${item.kebutuhan}";"${item.jumlah}";"${item.harga}";"${item.lama}";"${subtotal}"\n`;
+    });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'RAB_Lomba.csv';
+    link.click();
+  }
+
+  function logout() {
+    localStorage.removeItem('user_session');
+    window.location.href = 'login.html';
+  }
+
+  // Bootstrapping App Data
+  document.addEventListener('DOMContentLoaded', loadDashboardData);
+</script>
+
 </body>
 </html>
