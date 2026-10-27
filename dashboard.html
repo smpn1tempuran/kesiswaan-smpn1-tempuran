@@ -346,7 +346,10 @@
         <td>${item.e1 ? item.e1.nama : '-'}</td>
         <td>${item.e2 ? item.e2.nama : '-'}</td>
         <td>${item.e3 ? item.e3.nama : '-'}</td>
-        <td><button class="btn btn-danger" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button></td>
+        <td>
+  <button class="btn btn-warning btn-sm me-1" onclick="openEditModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">Edit</button>
+  <button class="btn btn-danger btn-sm" onclick="deleteSelection('${item.id}', '${item.students ? item.students.id : ''}')">Hapus</button>
+</td>
       </tr>
     `).join('');
   }
@@ -658,7 +661,50 @@
       loadDashboardData();
     }
   }
+// Fungsi Buka Modal Edit dan Isi Data Siswa
+function openEditModal(item) {
+  const student = item.students || {};
+  document.getElementById('edit_student_id').value = student.id || '';
+  document.getElementById('edit_nisn').value = student.nisn || '';
+  document.getElementById('edit_nama').value = student.nama_lengkap || '';
+  document.getElementById('edit_kelas').value = student.kelas || '';
 
+  const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+  modal.show();
+}
+
+// Fungsi Simpan Perubahan ke Supabase
+async function saveStudentEdit() {
+  const studentId = document.getElementById('edit_student_id').value;
+  const newNisn = document.getElementById('edit_nisn').value;
+  const newNama = document.getElementById('edit_nama').value;
+  const newKelas = document.getElementById('edit_kelas').value;
+
+  try {
+    const { error } = await db
+      .from('students')
+      .update({
+        nisn: newNisn,
+        nama_lengkap: newNama,
+        kelas: newKelas
+      })
+      .eq('id', studentId);
+
+    if (error) throw error;
+
+    alert('Data siswa berhasil diperbarui!');
+    
+    // Tutup Modal & Refresh Tabel Rekap
+    const modalEl = document.getElementById('editStudentModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
+
+    loadDashboardData(); // Memuat ulang tabel rekap
+
+  } catch (err) {
+    alert('Gagal mengedit data: ' + err.message);
+  }
+}
   function exportDataCSV() {
     let csv = "NISN;Nama Lengkap;Kelas;Pilihan 1;Pilihan 2;Pilihan 3\n";
     rawSelections.forEach(s => {
@@ -709,5 +755,43 @@
 
   document.addEventListener('DOMContentLoaded', loadDashboardData);
 </script>
+  </script>
+
+  <!-- Modal Edit Data Siswa -->
+  <div class="modal fade" id="editStudentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Data Siswa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editStudentForm">
+            <input type="hidden" id="edit_student_id">
+            
+            <div class="mb-3">
+              <label class="form-label">NISN</label>
+              <input type="text" class="form-control" id="edit_nisn" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nama Lengkap</label>
+              <input type="text" class="form-control" id="edit_nama" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Kelas</label>
+              <input type="text" class="form-control" id="edit_kelas" placeholder="Contoh: Kelas 7G" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-primary" onclick="saveStudentEdit()">Simpan Perubahan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
 </body>
 </html>
