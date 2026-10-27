@@ -670,16 +670,21 @@ async function openEditModal(item) {
   document.getElementById('edit_nama').value = student.nama_lengkap || '';
   document.getElementById('edit_kelas').value = student.kelas || '';
 
-  // Ambil otomatis dari Supabase jika ekskulList belum terisi
-  let list = (typeof ekskulList !== 'undefined' && ekskulList.length > 0) ? ekskulList : [];
-  if (list.length === 0) {
-    const { data } = await db.from('extracurriculars').select('*').order('name');
-    if (data) list = data;
+  // Ambil daftar ekskul dari database Supabase
+  let list = [];
+  const { data, error } = await db.from('extracurriculars').select('*');
+  if (data) {
+    list = data;
+  } else if (typeof ekskulList !== 'undefined' && ekskulList.length > 0) {
+    list = ekskulList;
   }
 
-  // Buat daftar opsi dropdown ekskul
+  // Generate dropdown dengan pengecekan nama kolom (nama / name)
   const optionsHtml = '<option value="">-- Tidak Memilih --</option>' + 
-    list.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+    list.map(e => {
+      const namaEkskul = e.nama || e.name || 'Ekskul ' + e.id;
+      return `<option value="${e.id}">${namaEkskul}</option>`;
+    }).join('');
 
   const sel1 = document.getElementById('edit_ekskul1');
   const sel2 = document.getElementById('edit_ekskul2');
@@ -689,7 +694,7 @@ async function openEditModal(item) {
   sel2.innerHTML = optionsHtml;
   sel3.innerHTML = optionsHtml;
 
-  // Set nilai pilihan ekskul siswa saat ini
+  // Set nilai terpilih saat ini
   sel1.value = item.extracurricular_1_id || '';
   sel2.value = item.extracurricular_2_id || '';
   sel3.value = item.extracurricular_3_id || '';
@@ -808,7 +813,7 @@ async function saveStudentEdit() {
   </script>
 
  <!-- Modal Edit Data Siswa & Pilihan Ekskul -->
-<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+<div class="modal fade" id="editStudentModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" style="z-index: 1055;">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
